@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model user {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      session[]
+  accounts      account[]
+
+  @@unique([email])
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// Basketball data models
+model team {
+  id          String   @id @default(cuid())
+  name        String   
+  displayName String?  // For alternate spellings/display names
+  shortName   String?  // Abbreviation (e.g., "LAL" for Lakers)
+  leagueId    String
+  league      league   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  homeGames   game[]   @relation("HomeTeam")
+  awayGames   game[]   @relation("AwayTeam")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, leagueId])
+  @@index([leagueId])
+  @@index([name])
+}
+
+model league {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  country   String?
+  season    String?
+  teams     team[]
+  games     game[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model game {
+  id              String     @id @default(cuid())
+  date            DateTime
+  homeTeamId      String
+  awayTeamId      String
+  homeTeam        team       @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeam        team       @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  homeFirst       Int
+  homeSecond      Int
+  homeThird       Int
+  homeFourth      Int
+  homeTotalPoints Int
+  awayFirst       Int
+  awaySecond      Int
+  awayThird       Int
+  awayFourth      Int
+  awayTotalPoints Int
+  leagueId        String
+  league          league     @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  odds            oddsline[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@unique([date, homeTeamId, awayTeamId, leagueId])
+  @@index([date])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([leagueId])
+}
+
+model oddsline {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  line      Float    // Points line (e.g., 80.5, 81.5)
+  overOdd   Float
+  underOdd  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, line])
+  @@index([gameId])
+  @@index([line])
+}
