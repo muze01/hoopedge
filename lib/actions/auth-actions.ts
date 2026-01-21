@@ -40,7 +40,6 @@ export const signIn = async (email: string, password: string) => {
         if (error instanceof APIError) {
             console.log("SignIn Error:", error.message, error.status);
             
-            // Check if the error is due to unverified email
             if (error.status === "FORBIDDEN" && error.message.includes("Email not verified")) {
                 console.log("Email not verified - redirecting to verify page");
                 redirect("/auth/verify-email");
@@ -65,14 +64,14 @@ export const signInSocial = async (provider: "google" | "github") => {
         }
         
      } catch (error) {
-        // Check if it's a Next.js redirect by looking at the digest
+
         if (
             error instanceof Error && 
             'digest' in error && 
             typeof error.digest === 'string' && 
             error.digest.startsWith('NEXT_REDIRECT')
         ) {
-            throw error; // Re-throw to let Next.js handle it
+            throw error; 
         }
         
         if (error instanceof APIError) {
@@ -155,7 +154,6 @@ export const verifyEmail = async (token: string) => {
     }
 }
 
-// Resend verification email
 export const resendVerificationEmail = async (email: string) => {
     try {
         const result = await auth.api.sendVerificationEmail({
@@ -175,31 +173,4 @@ export const resendVerificationEmail = async (email: string) => {
     }
 }
 
-// Optional: Change Password Action (for logged-in users)
-// TODO: this should be updateuser info not change password, there's no need for this, user can go to forgot password for this.
-export const changePassword = async (
-    currentPassword: string, 
-    newPassword: string,
-    revokeOtherSessions: boolean = true
-) => {
-    try {
-        const result = await auth.api.changePassword({
-            body: {
-                currentPassword,
-                newPassword,
-                revokeOtherSessions
-            },
-            headers: await headers()
-        })
-
-        return result;
-    } catch (error) {
-        if (error instanceof APIError) {
-            console.log("ChangePassword Error:", error.message, error.status)
-        }
-        console.error("ChangePassword Error", error);
-        throw error;
-    }
-}
-
-
+// TODO: Create a function to update user info?? Like change name?

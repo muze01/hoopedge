@@ -1,4 +1,3 @@
-// app/api/analytics/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { calculateTeamAnalytics, getLeagues } from "@/lib/analytics/team-stats";
 import { analyzeOddsPerformance } from "@/lib/analytics/odds-analysis";
@@ -7,7 +6,6 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    // Parse query parameters
     const leagueId = searchParams.get("leagueId") || undefined;
     const threshold = searchParams.get("threshold")
       ? parseInt(searchParams.get("threshold")!)
@@ -31,7 +29,6 @@ export async function GET(request: NextRequest) {
     // Check if we should include odds analysis (for initial load)
     const includeOdds = searchParams.get("includeOdds") !== "false";
 
-    // Calculate team analytics
     const analytics = await calculateTeamAnalytics({
       leagueId,
       threshold,

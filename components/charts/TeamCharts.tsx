@@ -18,43 +18,11 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Grid3x3 } from "lucide-react";
-
-// Types based on your analytics-client.tsx
-interface TeamStats {
-  team: string;
-  avgPoints: number;
-  avgConceded: number;
-  aboveThreshold: number;
-  aboveThresholdPct: number;
-  concededAboveThreshold: number;
-  concededAboveThresholdPct: number;
-  wins: number;
-  losses: number;
-  gamesPlayed: number;
-}
-
-interface TeamOddsRecurrence {
-  team: string;
-  homeOccurrences: number;
-  homeGames: number;
-  homePercentage: number;
-  awayOccurrences: number;
-  awayGames: number;
-  awayPercentage: number;
-  totalOccurrences: number;
-}
-
-interface TeamPerformanceChartProps {
-  data: TeamStats[];
-  title: string;
-  location: "home" | "away";
-  threshold: number;
-}
-
-interface OddsRecurrenceChartProps {
-  data: TeamOddsRecurrence[];
-  title?: string;
-}
+import {
+  TeamPerformanceChartProps,
+  TeamStats,
+  OddsRecurrenceChartProps,
+} from "@/types/all.types";
 
 // Custom tooltip for team performance
 const CustomPerformanceTooltip = ({ active, payload }: any) => {
@@ -114,7 +82,7 @@ const CustomOddsTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-// Team Performance with Tabs (Chart + Table)
+// Team Performance
 export const TeamPerformanceSection: React.FC<
   TeamPerformanceChartProps & {
     StatsTable: React.ComponentType<{ stats: TeamStats[]; title: string }>;
@@ -199,14 +167,14 @@ export const TeamPerformanceSection: React.FC<
   );
 };
 
-// Odds Recurrence with Tabs (Chart + Table)
+// Odds Recurrence
 export const OddsRecurrenceSection: React.FC<
   OddsRecurrenceChartProps & {
     TeamRecurrenceTable: React.ComponentType;
   }
 > = ({
   data,
-  title = "Most Recurring Teams in Over Odds Halftime Matchups",
+  title = "Teams That Go Over Most Often",
   TeamRecurrenceTable,
 }) => {
   const sortedData = [...data].sort(
@@ -214,9 +182,9 @@ export const OddsRecurrenceSection: React.FC<
   );
 
   return (
-    <Tabs defaultValue="table" className="w-full">
+    <Tabs defaultValue="table" className="w-full pt-3">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+        <h2 className="font-bold text-gray-800">{title}</h2>
         <TabsList>
           <TabsTrigger value="table" className="gap-2 cursor-pointer">
             <Grid3x3 className="w-4 h-4" />
@@ -233,7 +201,8 @@ export const OddsRecurrenceSection: React.FC<
         <Card>
           <CardHeader>
             <CardDescription>
-              Number of times halftime total went over the odds line
+              Number of times halftime total went over the odds line (stacked by
+              home/away)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -263,14 +232,17 @@ export const OddsRecurrenceSection: React.FC<
                 />
                 <Tooltip content={<CustomOddsTooltip />} />
                 <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="rect" />
+
                 <Bar
                   dataKey="homeOccurrences"
+                  stackId="stack"
                   fill="#3b82f6"
                   name="Home Occurrences"
-                  radius={[4, 4, 0, 0]}
+                  radius={[0, 0, 0, 0]}
                 />
                 <Bar
                   dataKey="awayOccurrences"
+                  stackId="stack"
                   fill="#ef4444"
                   name="Away Occurrences"
                   radius={[4, 4, 0, 0]}

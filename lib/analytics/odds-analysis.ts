@@ -1,49 +1,20 @@
-// lib/analytics/odds-analysis.ts
+import {
+  OddsAnalysisOptions,
+  OddsAnalysisResult,
+  OddsDistribution,
+  TeamOddsRecurrence,
+} from "@/types/all.types";
 import { prisma } from "../auth";
 
-export interface OddsDistribution {
-  belowLine: number;
-  equalToLine: number;
-  aboveLine: number;
-  noOddsAvailable: number;
-  totalGames: number;
-  analyzedGames: number;
-  fallbackBelow140: boolean; // Only true if had to use odds below 1.40
-}
-
-export interface TeamOddsRecurrence {
-  team: string;
-  homeOccurrences: number;
-  homeGames: number;
-  homePercentage: number;
-  awayOccurrences: number;
-  awayGames: number;
-  awayPercentage: number;
-  totalOccurrences: number;
-}
-
-export interface OddsAnalysisResult {
-  distribution: OddsDistribution;
-  teamRecurrences: TeamOddsRecurrence[];
-}
-
-interface OddsAnalysisOptions {
-  leagueId?: string;
-  startDate?: Date;
-  endDate?: Date;
-  minOdds?: number; // e.g., 1.70
-  maxOdds?: number; // e.g., 1.79
-}
-
 export async function analyzeOddsPerformance(
-  options: OddsAnalysisOptions = {}
+  options: OddsAnalysisOptions = {},
 ): Promise<OddsAnalysisResult> {
-  const { 
-    leagueId, 
-    startDate, 
+  const {
+    leagueId,
+    startDate,
     endDate = new Date(),
-    minOdds = 1.70,
-    maxOdds = 1.79
+    minOdds = 1.7,
+    maxOdds = 1.79,
   } = options;
 
   // Build query filters
@@ -72,7 +43,6 @@ export async function analyzeOddsPerformance(
     orderBy: { date: "asc" },
   });
 
-  // Initialize tracking structures
   const distribution: OddsDistribution = {
     belowLine: 0,
     equalToLine: 0,
@@ -125,8 +95,8 @@ export async function analyzeOddsPerformance(
     // Step 1: Look for .5 lines within the user's selected range
     for (const oddsLine of game.odds) {
       if (
-        oddsLine.line % 1 === 0.5 && 
-        oddsLine.overOdd >= minOdds && 
+        oddsLine.line % 1 === 0.5 &&
+        oddsLine.overOdd >= minOdds &&
         oddsLine.overOdd <= maxOdds
       ) {
         selectedLine = oddsLine.line;
@@ -138,18 +108,18 @@ export async function analyzeOddsPerformance(
     if (!selectedLine) {
       // Define all ranges from high to low
       const fallbackRanges = [
-        { min: 2.00, max: 2.09 },
-        { min: 1.90, max: 1.99 },
-        { min: 1.80, max: 1.89 },
-        { min: 1.70, max: 1.79 },
-        { min: 1.60, max: 1.69 },
-        { min: 1.50, max: 1.59 },
-        { min: 1.40, max: 1.49 },
+        { min: 2.0, max: 2.09 },
+        { min: 1.9, max: 1.99 },
+        { min: 1.8, max: 1.89 },
+        { min: 1.7, max: 1.79 },
+        { min: 1.6, max: 1.69 },
+        { min: 1.5, max: 1.59 },
+        { min: 1.4, max: 1.49 },
       ];
 
       // Find which range user selected
       const userRangeIndex = fallbackRanges.findIndex(
-        (range) => range.min === minOdds && range.max === maxOdds
+        (range) => range.min === minOdds && range.max === maxOdds,
       );
 
       // Try ranges below user's selection
@@ -161,7 +131,7 @@ export async function analyzeOddsPerformance(
               oddsLine.line % 1 === 0.5 &&
               oddsLine.overOdd >= range.min &&
               oddsLine.overOdd <= range.max
-            ) {              
+            ) {
               selectedLine = oddsLine.line;
               break;
             }
@@ -172,9 +142,9 @@ export async function analyzeOddsPerformance(
     }
 
     // Step 3: If still not found and user wanted 1.40+, try anything below 1.40
-    if (!selectedLine && minOdds >= 1.40) {
+    if (!selectedLine && minOdds >= 1.4) {
       for (const oddsLine of game.odds) {
-        if (oddsLine.line % 1 === 0.5 && oddsLine.overOdd < 1.40) {
+        if (oddsLine.line % 1 === 0.5 && oddsLine.overOdd < 1.4) {
           selectedLine = oddsLine.line;
           distribution.fallbackBelow140 = true;
           break;

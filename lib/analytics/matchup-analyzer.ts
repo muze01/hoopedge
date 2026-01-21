@@ -1,64 +1,20 @@
-// lib/analytics/matchup-analyzer.ts
+import {
+  MatchupOptions,
+  MatchupAnalysisResult,
+  HeadToHeadGame,
+  TeamMatchupStats,
+  GameLogEntry,
+} from "@/types/all.types";
 import { prisma } from "../auth";
 
-export interface TeamMatchupStats {
-  team: string;
-  location: "home" | "away";
-  gamesPlayed: number;
-  avgHalftimePoints: number;
-  avgHalftimeConceded: number;
-  overOddsCount: number;
-  overOddsPercentage: number;
-  wins: number;
-  losses: number;
-  gameLog: GameLogEntry[];
-}
-
-export interface GameLogEntry {
-  date: Date;
-  opponent: string;
-  halftimeTotal: number;
-  teamHalftime: number;
-  oppHalftime: number;
-  oddsLine: number | null;
-  wentOver: boolean;
-  result: "win" | "loss" | "draw";
-}
-
-export interface MatchupAnalysisResult {
-  homeTeam: TeamMatchupStats;
-  awayTeam: TeamMatchupStats;
-  headToHeadHistory: HeadToHeadGame[];
-}
-
-export interface HeadToHeadGame {
-  date: Date;
-  homeTeam: string;
-  awayTeam: string;
-  homeHalftime: number;
-  awayHalftime: number;
-  halftimeTotal: number;
-  oddsLine: number | null;
-  wentOver: boolean;
-}
-
-interface MatchupOptions {
-  homeTeamName: string;
-  awayTeamName: string;
-  leagueId: string;
-  minOdds?: number;
-  maxOdds?: number;
-  lastNGames?: number;
-}
-
 export async function analyzeMatchup(
-  options: MatchupOptions
+  options: MatchupOptions,
 ): Promise<MatchupAnalysisResult> {
   const {
     homeTeamName,
     awayTeamName,
     leagueId,
-    minOdds = 1.70,
+    minOdds = 1.7,
     maxOdds = 1.79,
     lastNGames,
   } = options;
@@ -80,7 +36,7 @@ export async function analyzeMatchup(
 
   if (!homeTeam || !awayTeam) {
     throw new Error(
-      `Team not found: ${!homeTeam ? homeTeamName : awayTeamName}`
+      `Team not found: ${!homeTeam ? homeTeamName : awayTeamName}`,
     );
   }
 
@@ -138,7 +94,7 @@ export async function analyzeMatchup(
     "home",
     homeTeamHomeGames,
     minOdds,
-    maxOdds
+    maxOdds,
   );
 
   // Process away team stats
@@ -147,7 +103,7 @@ export async function analyzeMatchup(
     "away",
     awayTeamAwayGames,
     minOdds,
-    maxOdds
+    maxOdds,
   );
 
   // Process head-to-head history
@@ -160,7 +116,7 @@ export async function analyzeMatchup(
     const wentOver = oddsLine !== null && halftimeTotal > oddsLine;
 
     return {
-      date: game.date,
+      date: game.date.toISOString(),
       homeTeam: game.homeTeam.name,
       awayTeam: game.awayTeam.name,
       homeHalftime,
@@ -183,7 +139,7 @@ function processTeamStats(
   location: "home" | "away",
   games: any[],
   minOdds: number,
-  maxOdds: number
+  maxOdds: number,
 ): TeamMatchupStats {
   const gameLog: GameLogEntry[] = [];
   let totalHalftimePoints = 0;
@@ -258,7 +214,7 @@ function processTeamStats(
 function findQualifyingOddsLine(
   odds: any[],
   minOdds: number,
-  maxOdds: number
+  maxOdds: number,
 ): number | null {
   // Step 1: Find .5 line within user's selected range
   for (const oddsLine of odds) {
@@ -273,18 +229,18 @@ function findQualifyingOddsLine(
 
   // Step 2: Cascade down through lower ranges
   const fallbackRanges = [
-    { min: 2.00, max: 2.09 },
-    { min: 1.90, max: 1.99 },
-    { min: 1.80, max: 1.89 },
-    { min: 1.70, max: 1.79 },
-    { min: 1.60, max: 1.69 },
-    { min: 1.50, max: 1.59 },
-    { min: 1.40, max: 1.49 },
+    { min: 2.0, max: 2.09 },
+    { min: 1.9, max: 1.99 },
+    { min: 1.8, max: 1.89 },
+    { min: 1.7, max: 1.79 },
+    { min: 1.6, max: 1.69 },
+    { min: 1.5, max: 1.59 },
+    { min: 1.4, max: 1.49 },
   ];
 
   // Find which range user selected
   const userRangeIndex = fallbackRanges.findIndex(
-    (range) => range.min === minOdds && range.max === maxOdds
+    (range) => range.min === minOdds && range.max === maxOdds,
   );
 
   // Try ranges below user's selection
@@ -304,9 +260,9 @@ function findQualifyingOddsLine(
   }
 
   // Step 3: If still not found and user wanted 1.40+, try anything below 1.40
-  if (minOdds >= 1.40) {
+  if (minOdds >= 1.4) {
     for (const oddsLine of odds) {
-      if (oddsLine.line % 1 === 0.5 && oddsLine.overOdd < 1.40) {
+      if (oddsLine.line % 1 === 0.5 && oddsLine.overOdd < 1.4) {
         return oddsLine.line;
       }
     }
@@ -318,7 +274,7 @@ function findQualifyingOddsLine(
 // Get available teams for autocomplete
 export async function searchTeams(
   leagueId: string,
-  searchQuery: string
+  searchQuery: string,
 ): Promise<Array<{ id: string; name: string }>> {
   const teams = await prisma.team.findMany({
     where: {
@@ -331,7 +287,7 @@ export async function searchTeams(
     select: {
       id: true,
       name: true,
-    }
+    },
   });
 
   return teams;

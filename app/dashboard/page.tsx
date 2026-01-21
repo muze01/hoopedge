@@ -11,8 +11,10 @@ export default async function DashboardPage() {
     if (!session) {
         redirect("/auth");
     }
+
     if (!session.user.emailVerified) {
         redirect("/auth/verify-email");
     }
+    
   return <DashboardClientPage session={ session } />;
 }

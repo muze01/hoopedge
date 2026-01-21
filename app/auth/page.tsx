@@ -7,7 +7,7 @@ export default async function AuthPage() {
     const session = await auth.api.getSession({
         headers: await headers()
     });
-// when and how does this file get to be executed..
+
     if (session) {
         redirect("/dashboard");
     }

@@ -7,6 +7,7 @@ import AnimatedCTA from "@/components/AnimatedCTA";
 export default function Home() {
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
+
       {/* Hero Section */}
       <section className="max-w-6xl mx-auto px-6 pt-24 pb-32 text-center">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">
@@ -24,7 +25,7 @@ export default function Home() {
         <AnimatedCTA />
       </section>
 
-      {/* Value Proposition */}
+      {/* Value Props */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="rounded-2xl shadow-sm">

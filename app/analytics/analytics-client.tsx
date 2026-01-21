@@ -5,93 +5,14 @@ import {
   TeamPerformanceSection,
   OddsRecurrenceSection,
 } from "@/components/charts/TeamCharts";
-
-interface TeamStats {
-  team: string;
-  avgPoints: number;
-  avgConceded: number;
-  aboveThreshold: number;
-  aboveThresholdPct: number;
-  concededAboveThreshold: number;
-  concededAboveThresholdPct: number;
-  wins: number;
-  losses: number;
-  gamesPlayed: number;
-}
-
-interface OddsDistribution {
-  belowLine: number;
-  equalToLine: number;
-  aboveLine: number;
-  noOddsAvailable: number;
-  totalGames: number;
-  analyzedGames: number;
-  fallbackBelow140: boolean;
-}
-
-interface TeamMatchupStats {
-  team: string;
-  location: "home" | "away";
-  gamesPlayed: number;
-  avgHalftimePoints: number;
-  avgHalftimeConceded: number;
-  overOddsCount: number;
-  overOddsPercentage: number;
-  wins: number;
-  losses: number;
-  gameLog: GameLogEntry[];
-}
-
-interface GameLogEntry {
-  date: string;
-  opponent: string;
-  halftimeTotal: number;
-  teamHalftime: number;
-  oppHalftime: number;
-  oddsLine: number | null;
-  wentOver: boolean;
-  result: "win" | "loss" | "draw";
-}
-
-interface HeadToHeadGame {
-  date: string;
-  homeTeam: string;
-  awayTeam: string;
-  homeHalftime: number;
-  awayHalftime: number;
-  halftimeTotal: number;
-  oddsLine: number | null;
-  wentOver: boolean;
-}
-
-interface MatchupResult {
-  homeTeam: TeamMatchupStats;
-  awayTeam: TeamMatchupStats;
-  headToHeadHistory: HeadToHeadGame[];
-}
-
-interface TeamOddsRecurrence {
-  team: string;
-  homeOccurrences: number;
-  homeGames: number;
-  homePercentage: number;
-  awayOccurrences: number;
-  awayGames: number;
-  awayPercentage: number;
-  totalOccurrences: number;
-}
-
-interface League {
-  id: string;
-  name: string;
-  country: string | null;
-  season: string | null;
-}
-
-interface TeamSuggestion {
-  id: string;
-  name: string;
-}
+import {
+  TeamStats,
+  OddsDistribution,
+  TeamOddsRecurrence,
+  TeamSuggestion,
+  MatchupResult,
+  League,
+} from "@/types/all.types";
 
 export default function AnalyticsClient() {
   const [homeStats, setHomeStats] = useState<TeamStats[]>([]);
@@ -317,7 +238,7 @@ export default function AnalyticsClient() {
         maxOdds: maxOdds.toString(),
       });
 
-      // if (appliedLastNGames !== undefined) { // this section should have it's own filters
+      // if (appliedLastNGames !== undefined) { // this section should have it's own filters don't like that I'm using from the Teams Stats
       //   params.append("lastNGames", appliedLastNGames.toString());
       // }
 
@@ -446,7 +367,7 @@ export default function AnalyticsClient() {
 
     return (
       <div className="mb-6">
-        <h2 className="text-xl font-bold mb-2 text-gray-800">
+        <h2 className="pt-3 font-bold mb-2 text-gray-800">
           Halftime Total Points Distribution (Relative to Odds Line)
         </h2>
 
@@ -645,8 +566,8 @@ export default function AnalyticsClient() {
       <h1 className="text-3xl font-bold mb-6 text-gray-900">Team Analytics</h1>
 
       {/* Filters */}
-      <div className="bg-slate-50 p-5 rounded-xl shadow-sm border border-slate-200 mb-8 w-fit">
-        <div className="flex flex-col gap-5 w-full md:w-80">
+      <div className="bg-slate-50 p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 mb-6 sm:mb-8 w-full sm:w-fit">
+        <div className="flex flex-col gap-4 sm:gap-5 w-full">
           <div className="w-full">
             <label className="block text-sm font-bold text-gray-700 mb-1">
               Select League
@@ -654,7 +575,7 @@ export default function AnalyticsClient() {
             <select
               value={selectedLeague}
               onChange={(e) => setSelectedLeague(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="w-full px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm sm:text-base"
               disabled={!leaguesLoaded}
             >
               {!leaguesLoaded && <option value="">Loading leagues...</option>}
@@ -669,7 +590,7 @@ export default function AnalyticsClient() {
 
           <div className="flex flex-col gap-3 p-3 bg-white rounded-lg border border-gray-200">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-xs sm:text-sm font-medium text-gray-700">
                 Last N Games:
               </label>
               <div className="relative group">
@@ -691,13 +612,13 @@ export default function AnalyticsClient() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <input
                 type="number"
                 value={lastNGames}
                 placeholder="All"
                 onChange={(e) => setLastNGames(e.target.value)}
-                className="w-16 px-2 py-1 text-center text-gray-500 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-16 px-2 py-1.5 text-center text-gray-500 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-sm"
                 min="1"
                 max="5"
               />
@@ -708,7 +629,7 @@ export default function AnalyticsClient() {
                     setAppliedLastNGames(value);
                   }
                 }}
-                className="px-4 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors"
+                className="px-3 sm:px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors"
               >
                 Apply
               </button>
@@ -718,7 +639,7 @@ export default function AnalyticsClient() {
                     setAppliedLastNGames(undefined);
                     setLastNGames("");
                   }}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 transition-colors"
+                  className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 transition-colors"
                   title="Show all games"
                 >
                   Reset
@@ -747,7 +668,7 @@ export default function AnalyticsClient() {
             <StatsTable stats={homeStats} title="Home Performance" />
             <StatsTable stats={awayStats} title="Away Performance" />
           </div> */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
             <TeamPerformanceSection
               data={homeStats}
               title="Home Performance"
@@ -775,13 +696,13 @@ export default function AnalyticsClient() {
       ) : (
         <>
           {/* Odds Analysis Section */}
-          <div className="mt-12 pt-8 border-t-2 border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-2 border-gray-200">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Odds Analysis
             </h1>
 
             {/* Odds Range Filter */}
-            <div className="bg-slate-50 p-4 rounded-lg shadow-sm border border-slate-200 w-fit mb-6">
+            <div className="bg-slate-50 p-4 rounded-lg shadow-sm border border-slate-200 w-full sm:w-fit mb-4 sm:mb-6">
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Select Odds
               </label>
@@ -793,7 +714,7 @@ export default function AnalyticsClient() {
                   setMinOdds(min);
                   setMaxOdds(max);
                 }}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm sm:text-base"
               >
                 {oddsRanges.map((range) => (
                   <option key={range.label} value={`${range.min}-${range.max}`}>
@@ -807,8 +728,7 @@ export default function AnalyticsClient() {
               </p> */}
             </div>
 
-            {/* <OddsDistributionCard />
-  <TeamRecurrenceTable /> */}
+            <OddsDistributionCard />
 
             <OddsRecurrenceSection
               data={teamRecurrences}
@@ -819,14 +739,14 @@ export default function AnalyticsClient() {
       )}
 
       {/* Matchup Analyzer Section */}
-      <div className="mt-12 pt-8 border-t-2 border-gray-200">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900">
+      <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-2 border-gray-200">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">
           Head-to-Head Matchup Analyzer
         </h1>
 
         {/* Matchup Input */}
-        <div className="bg-white border rounded-lg shadow-sm p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="bg-white border rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
             <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">
                 Home Team
@@ -834,7 +754,7 @@ export default function AnalyticsClient() {
               <select
                 value={homeTeamInput}
                 onChange={(e) => setHomeTeamInput(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm sm:text-base"
                 disabled={!selectedLeague || availableTeams.length === 0}
               >
                 <option value="">-- Select Home Team --</option>
@@ -857,7 +777,7 @@ export default function AnalyticsClient() {
               <select
                 value={awayTeamInput}
                 onChange={(e) => setAwayTeamInput(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm sm:text-base"
                 disabled={!selectedLeague || availableTeams.length === 0}
               >
                 <option value="">-- Select Away Team --</option>
@@ -892,7 +812,7 @@ export default function AnalyticsClient() {
               !homeTeamInput ||
               !awayTeamInput
             }
-            className="mt-4 w-full md:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="mt-4 w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             {matchupLoading ? "Analyzing..." : "Analyze Matchup"}
           </button>
@@ -902,53 +822,48 @@ export default function AnalyticsClient() {
         {matchupResult && (
           <>
             {/* Stats Comparison Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid mt-5 grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
               {/* Home Team Stats */}
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-1 sm:gap-0">
+                  <h3 className="text-sm sm:text-lg font-bold text-gray-900 truncate">
                     {matchupResult.homeTeam.team}
                   </h3>
-                  <span className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full">
+                  <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-600 text-white text-xs font-semibold rounded-full w-fit">
                     HOME
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Games Played:</span>
+                    <span className="text-gray-900">Games Played:</span>
                     <span className="font-semibold text-gray-900">
                       {matchupResult.homeTeam.gamesPlayed}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">
-                      Avg HT Points:
-                    </span>
+                    <span className="text-gray-900">Avg HT Pts:</span>
                     <span className="font-semibold text-gray-900">
                       {matchupResult.homeTeam.avgHalftimePoints.toFixed(1)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">
-                      Avg HT Conceded:
-                    </span>
+                    <span className="text-gray-900">Avg HT Con:</span>
                     <span className="font-semibold text-gray-900">
                       {matchupResult.homeTeam.avgHalftimeConceded.toFixed(1)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Over Odds:</span>
+                    <span className="text-gray-900">Over Odds:</span>
                     <span className="font-semibold text-green-600">
                       {matchupResult.homeTeam.overOddsCount} (
-                      {matchupResult.homeTeam.overOddsPercentage.toFixed(1)}
-                      %)
+                      {matchupResult.homeTeam.overOddsPercentage.toFixed(1)}%)
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Record:</span>
+                    <span className="text-gray-900">Record:</span>
                     <span className="font-semibold text-gray-900">
-                      {matchupResult.homeTeam.wins}W -{" "}
+                      {matchupResult.homeTeam.wins}W-
                       {matchupResult.homeTeam.losses}L
                     </span>
                   </div>
@@ -956,51 +871,46 @@ export default function AnalyticsClient() {
               </div>
 
               {/* Away Team Stats */}
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">
+              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-1 sm:gap-0">
+                  <h3 className="text-sm sm:text-lg font-bold text-gray-900 truncate">
                     {matchupResult.awayTeam.team}
                   </h3>
-                  <span className="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+                  <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-red-600 text-white text-xs font-semibold rounded-full w-fit">
                     AWAY
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Games Played:</span>
+                    <span className="text-gray-900">Games Played:</span>
                     <span className="font-semibold text-gray-900">
                       {matchupResult.awayTeam.gamesPlayed}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">
-                      Avg HT Points:
-                    </span>
+                    <span className="text-gray-900">Avg HT Pts:</span>
                     <span className="font-semibold text-gray-900">
                       {matchupResult.awayTeam.avgHalftimePoints.toFixed(1)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">
-                      Avg HT Conceded:
-                    </span>
+                    <span className="text-gray-900">Avg HT Con:</span>
                     <span className="font-semibold text-gray-900">
                       {matchupResult.awayTeam.avgHalftimeConceded.toFixed(1)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Over Odds:</span>
+                    <span className="text-gray-900">Over Odds:</span>
                     <span className="font-semibold text-green-600">
                       {matchupResult.awayTeam.overOddsCount} (
-                      {matchupResult.awayTeam.overOddsPercentage.toFixed(1)}
-                      %)
+                      {matchupResult.awayTeam.overOddsPercentage.toFixed(1)}%)
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Record:</span>
+                    <span className="text-gray-900">Record:</span>
                     <span className="font-semibold text-gray-900">
-                      {matchupResult.awayTeam.wins}W -{" "}
+                      {matchupResult.awayTeam.wins}W-
                       {matchupResult.awayTeam.losses}L
                     </span>
                   </div>
@@ -1010,8 +920,8 @@ export default function AnalyticsClient() {
 
             {/* Head-to-Head History */}
             {matchupResult.headToHeadHistory.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-3 text-gray-800">
+              <div className="mb-4 sm:mb-6 pt-3">
+                <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
                   Head-to-Head History
                 </h3>
                 <div className="overflow-x-auto border rounded-lg shadow-sm">
@@ -1034,22 +944,22 @@ export default function AnalyticsClient() {
                     <tbody className="divide-y divide-gray-200">
                       {matchupResult.headToHeadHistory.map((game, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 text-xs">
                             {new Date(game.date).toLocaleDateString()}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 text-xs">
                             {game.homeTeam} vs {game.awayTeam}
                             <div className="text-xs text-gray-900">
                               ({game.homeHalftime} - {game.awayHalftime})
                             </div>
                           </td>
-                          <td className="px-4 py-2 text-right font-semibold">
+                          <td className="px-4 py-2 text-right font-semibold text-xs">
                             {game.halftimeTotal}
                           </td>
-                          <td className="px-4 py-2 text-right">
+                          <td className="px-4 py-2 text-right text-xs">
                             {game.oddsLine?.toFixed(1) || "—"}
                           </td>
-                          <td className="px-4 py-2 text-center">
+                          <td className="px-4 py-2 text-xs text-center">
                             {game.wentOver ? (
                               <span className="text-green-600 font-semibold">
                                 ✓ Over
@@ -1069,10 +979,10 @@ export default function AnalyticsClient() {
             )}
 
             {/* Game Logs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="pt-3 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Home Team Game Log */}
               <div>
-                <h3 className="text-lg font-bold mb-3 text-gray-800">
+                <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
                   {matchupResult.homeTeam.team} - Recent Home Games
                 </h3>
                 <div className="space-y-2">
@@ -1081,10 +991,10 @@ export default function AnalyticsClient() {
                     .map((game, idx) => (
                       <div
                         key={idx}
-                        className="p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
+                        className="p-2 sm:p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-xs sm:text-sm font-medium text-gray-900">
                             {matchupResult.homeTeam.team} vs {game.opponent}
                           </span>
                           <span className="text-xs text-gray-900">
@@ -1097,11 +1007,11 @@ export default function AnalyticsClient() {
                             {game.halftimeTotal}) (oddsLine: {game.oddsLine})
                           </span>
                           {game.wentOver ? (
-                            <span className="text-green-600 font-semibold">
+                            <span className="text-green-600 font-semibold ml-2">
                               ✓
                             </span>
                           ) : (
-                            <span className="text-red-600 font-semibold">
+                            <span className="text-red-600 font-semibold ml-2">
                               ✗
                             </span>
                           )}
@@ -1113,7 +1023,7 @@ export default function AnalyticsClient() {
 
               {/* Away Team Game Log */}
               <div>
-                <h3 className="text-lg font-bold mb-3 text-gray-800">
+                <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
                   {matchupResult.awayTeam.team} - Recent Away Games
                 </h3>
                 <div className="space-y-2">
@@ -1122,10 +1032,10 @@ export default function AnalyticsClient() {
                     .map((game, idx) => (
                       <div
                         key={idx}
-                        className="p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
+                        className="p-2 sm:p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-xs sm:text-sm font-medium text-gray-900">
                             {game.opponent} vs {matchupResult.awayTeam.team}
                           </span>
                           <span className="text-xs text-gray-900">
@@ -1138,11 +1048,11 @@ export default function AnalyticsClient() {
                             {game.halftimeTotal}) (oddsLine: {game.oddsLine})
                           </span>
                           {game.wentOver ? (
-                            <span className="text-green-600 font-semibold">
+                            <span className="text-green-600 font-semibold ml-2">
                               ✓
                             </span>
                           ) : (
-                            <span className="text-red-600 font-semibold">
+                            <span className="text-red-600 font-semibold ml-2">
                               ✗
                             </span>
                           )}

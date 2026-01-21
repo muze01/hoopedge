@@ -1,31 +1,5 @@
-// lib/analytics/team-stats.ts
 import { prisma } from "@/lib/auth";
-
-export interface TeamStats {
-  team: string;
-  avgPoints: number;
-  avgConceded: number;
-  aboveThreshold: number;
-  aboveThresholdPct: number;
-  concededAboveThreshold: number;
-  concededAboveThresholdPct: number;
-  wins: number;
-  losses: number;
-  gamesPlayed: number;
-}
-
-export interface AnalyticsResult {
-  homeStats: TeamStats[];
-  awayStats: TeamStats[];
-}
-
-interface AnalyticsOptions {
-  leagueId?: string;
-  threshold?: number;
-  lastNGames?: number; // If provided, use only last N games per team
-  startDate?: Date;
-  endDate?: Date;
-}
+import { AnalyticsOptions, AnalyticsResult, TeamStats } from "@/types/all.types";
 
 export async function calculateTeamAnalytics(
   options: AnalyticsOptions = {}

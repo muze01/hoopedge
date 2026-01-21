@@ -1,4 +1,3 @@
-// app/api/matchup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeMatchup, searchTeams } from "@/lib/analytics/matchup-analyzer";
 
@@ -7,7 +6,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get("action");
 
-    // Handle team search
     if (action === "search") {
       const leagueId = searchParams.get("leagueId");
       const query = searchParams.get("query") || "";
@@ -23,7 +21,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, teams });
     }
 
-    // Handle matchup analysis
     const homeTeam = searchParams.get("homeTeam");
     const awayTeam = searchParams.get("awayTeam");
     const leagueId = searchParams.get("leagueId");

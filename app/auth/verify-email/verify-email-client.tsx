@@ -3,10 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyEmail, resendVerificationEmail } from "@/lib/actions/auth-actions";
-
-interface VerifyEmailClientProps {
-    userEmail?: string;
-}
+import { VerifyEmailClientProps } from "@/types/all.types";
 
 export default function VerifyEmailClient({ userEmail }: VerifyEmailClientProps) {
   const [isVerifying, setIsVerifying] = useState(false);

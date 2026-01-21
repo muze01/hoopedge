@@ -1,4 +1,3 @@
-// app/api/odds-analysis/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeOddsPerformance } from "@/lib/analytics/odds-analysis";
 
@@ -6,7 +5,6 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    // Parse query parameters
     const leagueId = searchParams.get("leagueId") || undefined;
     const minOdds = searchParams.get("minOdds")
       ? parseFloat(searchParams.get("minOdds")!)
@@ -21,7 +19,6 @@ export async function GET(request: NextRequest) {
       ? new Date(searchParams.get("endDate")!)
       : new Date();
 
-    // Calculate odds analysis only
     const oddsAnalysis = await analyzeOddsPerformance({
       leagueId,
       startDate,

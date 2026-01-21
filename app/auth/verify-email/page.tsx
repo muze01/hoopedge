@@ -13,6 +13,6 @@ export default async function VerifyEmailPage() {
         redirect("/dashboard");
     }
 
-  // Pass user email if they're logged in but not verified...THE WAY WE'RE TRYING TO CREATE THE SITE, THIS SHOULDN'T BE POSSIBLE ANYWAY. ALL USERS SHOULD BE VERIFIED
+  // Pass user email if they're logged in but not verified...Happens after new user signup..so we auto send a mail so they verify
     return <VerifyEmailClient userEmail={session?.user?.email} />;
 }

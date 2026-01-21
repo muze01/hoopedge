@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { forgotPassword } from "@/lib/actions/auth-actions";
 
-
 export default function ForgotPasswordClient() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);

@@ -11,7 +11,7 @@ interface LeagueConfig {
 }
 
 // Configure multiple leagues to ingest
-// C:\Users\sh\Documents\Work\Python Files\basketball\spain
+// ../Python Files/basketball/spain/.....
 const leagueConfigs: LeagueConfig[] = [
   {
     name: "Liga ACB",
