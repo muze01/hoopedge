@@ -1,4 +1,50 @@
 
+export type UserRole = "FREE" | "PRO" | "ADMIN";
+
+export interface UserSession {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  image?: string;
+}
+
+export interface FeatureAccess {
+  canAccessOddsAnalysis: boolean;
+  canAccessMatchupAnalyzer: boolean;
+  canAccessAdvancedCharts: boolean;
+  canExportData: boolean;
+  maxLeagues?: number;
+  maxHistoricalGames?: number;
+}
+
+export const getFeatureAccess = (role: UserRole): FeatureAccess => {
+  switch (role) {
+    case "PRO":
+    case "ADMIN":
+      return {
+        canAccessOddsAnalysis: true,
+        canAccessMatchupAnalyzer: true,
+        canAccessAdvancedCharts: true,
+        canExportData: true,
+      };
+    case "FREE":
+    default:
+      return {
+        canAccessOddsAnalysis: false,
+        canAccessMatchupAnalyzer: false,
+        canAccessAdvancedCharts: false,
+        canExportData: false,
+        maxLeagues: 1,
+        maxHistoricalGames: 10,
+      };
+  }
+};
+
+export interface UserRoleClientProps {
+  userRole: UserRole;
+}
+
 export interface TeamStats {
   team: string;
   avgPoints: number;
@@ -87,7 +133,7 @@ export interface TeamSuggestion {
 }
 
 export interface VerifyEmailClientProps {
-    userEmail?: string;
+  userEmail?: string;
 }
 
 export interface TeamPerformanceChartProps {
@@ -136,7 +182,6 @@ export interface OddsAnalysisOptions {
   maxOdds?: number; // e.g., 1.79
 }
 
-
 export interface TeamMatchupStats {
   team: string;
   location: "home" | "away";
@@ -175,7 +220,6 @@ export interface MatchupOptions {
   maxOdds?: number;
   lastNGames?: number;
 }
-
 
 export interface TeamStats {
   team: string;

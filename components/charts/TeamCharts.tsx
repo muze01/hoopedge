@@ -92,7 +92,7 @@ export const TeamPerformanceSection: React.FC<
 
   return (
     <Tabs defaultValue="table" className="w-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 mt-10">
         <h2 className="text-xl font-bold text-gray-800">{title}</h2>
         <TabsList>
           <TabsTrigger value="table" className="gap-2 cursor-pointer">
@@ -183,7 +183,7 @@ export const OddsRecurrenceSection: React.FC<
 
   return (
     <Tabs defaultValue="table" className="w-full pt-3">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 mt-10">
         <h2 className="font-bold text-gray-800">{title}</h2>
         <TabsList>
           <TabsTrigger value="table" className="gap-2 cursor-pointer">

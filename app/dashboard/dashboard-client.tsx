@@ -4,14 +4,18 @@ import { signOut } from "@/lib/actions/auth-actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { UserRole } from "@/types/all.types";
 
 type Session = typeof auth.$Infer.Session;
+type DashboardClientProps = {
+  session: Session | null;
+  userRole: UserRole;
+};
 
 export default function DashboardClientPage({
   session,
-}: {
-  session: Session | null;
-}) {
+  userRole,
+}: DashboardClientProps) {
   const router = useRouter();
   const user = session?.user;
 
@@ -82,7 +86,15 @@ export default function DashboardClientPage({
 
                 <div>
                   <span className="text-gray-600">Account type:</span>
-                  <span className="ml-2 text-gray-900">Free</span>
+                  <span
+                    className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      userRole === "FREE"
+                        ? "bg-red-100 text-gray-800"
+                        : "bg-green-100 text-indigo-800"
+                    }`}
+                  >
+                    {userRole}
+                  </span>{" "}
                 </div>
 
                 <div className="overflow-hidden">
@@ -93,6 +105,29 @@ export default function DashboardClientPage({
                 </div>
               </div>
             </div>
+
+            {userRole === "FREE" && (
+              <div className="mb-8 mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-yellow-900">
+                      Unlock Pro Analytics
+                    </h3>
+                    <p className="text-sm text-yellow-800 mt-1">
+                      Get access to advanced HT filters, deeper odds breakdowns,
+                      and upcoming FT & quarter analysis.
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/pricing"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-600 transition"
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

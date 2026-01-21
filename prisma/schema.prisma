@@ -13,18 +13,74 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  FREE
+  PRO
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYSTACK
+  FLUTTERWAVE
+  MANUAL // For manual upgrades by admin
+}
+
 model user {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      session[]
-  accounts      account[]
+  id              String         @id
+  name            String
+  email           String
+  emailVerified   Boolean        @default(false)
+  image           String?
+  role            UserRole       @default(FREE)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  sessions        session[]
+  accounts        account[]
+  subscriptions   subscription[]
 
   @@unique([email])
+}
+
+model subscription {
+  id                String             @id @default(cuid())
+  userId            String
+  user              user               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status            SubscriptionStatus @default(ACTIVE)
+  plan              UserRole           // PRO, etc.
+  
+  // Payment details
+  provider          PaymentProvider?
+  providerSubId     String?            @unique // Stripe subscription ID, Paystack sub code, etc.
+  providerCustomerId String?           // Customer ID from payment provider
+  
+  // Dates
+  startDate         DateTime           @default(now())
+  endDate           DateTime?          // When subscription expires
+  cancelledAt       DateTime?
+  
+  // Pricing
+  amount            Float?             // Amount paid
+  currency          String?            // USD, NGN, etc.
+  interval          String?            // monthly, yearly
+  
+  // Metadata
+  metadata          Json?              // Store additional provider-specific data
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
 }
 
 model session {
