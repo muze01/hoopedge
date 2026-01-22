@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { PaystackScript } from "@/components/PaystackScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default async function RootLayout({
       >
         <Navigation session={session} />
         {children}
+        <PaystackScript />
         <Footer />
       </body>
     </html>

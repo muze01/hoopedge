@@ -5,13 +5,29 @@ import { redirect } from "next/navigation";
 import { prisma } from "../../lib/auth";
 import { SubscriptionService } from "@/lib/subscription-service";
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; reference?: string };
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
     redirect("/auth");
+  }
+
+  // If payment was successful, verify it
+  if (searchParams.success === "true" && searchParams.reference) {
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/verify?reference=${searchParams.reference}`,
+        { cache: "no-store" },
+      );
+    } catch (error) {
+      console.error("Failed to verify payment:", error);
+    }
   }
 
   // Fetch user role from database

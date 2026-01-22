@@ -1,7 +1,18 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { StripeCheckoutButton } from "@/components/StripeCheckoutButton";
+import { PaystackCheckoutButton } from "@/components/PaystackCheckoutButton";
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Detect user location (you can use a service or IP-based detection)
+  const isNigerian = true; // Replace with actual detection logic
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-7xl mx-auto mt-10">
@@ -52,12 +63,12 @@ export default function PricingPage() {
               </li>
             </ul>
 
-            <Link
+            {/* <Link
               href="/analytics"
               className="block w-full text-center px-6 py-3 bg-gray-200 text-gray-900 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
             >
               Current Plan
-            </Link>
+            </Link> */}
           </div>
 
           {/* Pro Plan */}
@@ -114,9 +125,22 @@ export default function PricingPage() {
               </li>
             </ul>
 
-            <button className="w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer">
-              Upgrade to Pro
-            </button>
+            {isNigerian && session ? (
+              <PaystackCheckoutButton
+                plan="monthly"
+                email={session.user.email}
+                className="w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer"
+              >
+                Upgrade to Pro
+              </PaystackCheckoutButton>
+            ) : (
+              <StripeCheckoutButton
+                plan="monthly"
+                className="w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer"
+              >
+                Upgrade to Pro
+              </StripeCheckoutButton>
+            )}
           </div>
         </div>
 

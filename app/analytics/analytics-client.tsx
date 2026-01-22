@@ -278,6 +278,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
     }
   };
 
+  // TODO: EVENTUALLY MOVE TO COMPONENTS
   const StatsTable = ({
     stats,
     title,
@@ -376,6 +377,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
     </div>
   );
 
+  // TODO: EVENTUALLY MOVE TO COMPONENTS
   const OddsDistributionCard = () => {
     if (!oddsDistribution) return null;
 
@@ -482,6 +484,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
     );
   };
 
+  // TODO: EVENTUALLY MOVE TO COMPONENTS
   const TeamRecurrenceTable = () => {
     if (teamRecurrences.length === 0) return null;
 
@@ -564,6 +567,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <TestUpgradeButton />
       <div className="flex items-center justify-between mb-7 mt-15">
         <h1 className="text-3xl font-bold text-gray-900">Team Analytics</h1>
 
@@ -675,8 +679,6 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
           </div>
         ) : (
           <>
-            {/* Team Performance Stats */}
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
               <TeamPerformanceSection
                 data={homeStats}
