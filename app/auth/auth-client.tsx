@@ -151,7 +151,7 @@ export default function AuthClientPage() {
                 Continue with Google
               </button>
 
-              <button
+              {/* <button
                 onClick={() => handleSocialAuth("github")}
                 disabled={isLoading}
                 className="w-full cursor-pointer flex items-center justify-center gap-3 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition disabled:opacity-50"
@@ -168,7 +168,7 @@ export default function AuthClientPage() {
                   />
                 </svg>
                 Continue with GitHub
-              </button>
+              </button> */}
             </div>
 
             {/* Divider */}
