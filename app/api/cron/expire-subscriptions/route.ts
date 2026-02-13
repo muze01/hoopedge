@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { SubscriptionService } from "@/lib/subscription-service";
 
 /**
- * Cron job to expire subscriptions
+ * cron job to expire subscriptions
  * Set up in Vercel as a Cron Job or call from external cron service
  *
  * In vercel.json:
@@ -14,6 +14,7 @@ import { SubscriptionService } from "@/lib/subscription-service";
  * }
  */
 
+// TODO: Haven't tested this
 export async function GET(req: NextRequest) {
   try {
     // Verify cron secret (optional but recommended)

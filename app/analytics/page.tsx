@@ -8,7 +8,7 @@ import { SubscriptionService } from "@/lib/subscription-service";
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: { success?: string; reference?: string };
+  searchParams: Promise<{ success?: string; reference?: string }>;
 }) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -19,10 +19,11 @@ export default async function AnalyticsPage({
   }
 
   // If payment was successful, verify it
-  if (searchParams.success === "true" && searchParams.reference) {
+  const params = await searchParams;
+  if (params.success === "true" && params.reference) {
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/verify?reference=${searchParams.reference}`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/verify?reference=${params.reference}`,
         { cache: "no-store" },
       );
     } catch (error) {

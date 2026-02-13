@@ -6,7 +6,7 @@ import { prisma } from "@/lib/auth";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
-  const body = await req.text();
+  const body = await req.text(); // also known as the payload
   const signature = req.headers.get("stripe-signature");
 
   if (!signature) {
@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-
         if (session.mode === "subscription" && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string,
@@ -41,10 +40,8 @@ export async function POST(req: NextRequest) {
             throw new Error("No userId in session metadata");
           }
 
-          // Get the first subscription item
           const subscriptionItem = subscription.items.data[0];
 
-          // Map Stripe interval to our interval type
           const stripeInterval = subscriptionItem?.price?.recurring?.interval;
           let interval: "monthly" | "yearly" | undefined;
 
@@ -54,14 +51,12 @@ export async function POST(req: NextRequest) {
             interval = "yearly";
           }
 
-          // Get current_period_end from subscription item
           const currentPeriodEnd = subscriptionItem?.current_period_end;
 
           if (!currentPeriodEnd) {
             throw new Error("No current_period_end found in subscription");
           }
 
-          // Create subscription in database
           await SubscriptionService.createSubscription({
             userId,
             plan: "PRO",
@@ -78,25 +73,28 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.updated": {
+        // TODO: HAVEN'T TESTED THIS
+        console.log("GOT TO update");
+
         const subscription = event.data.object as Stripe.Subscription;
 
-        // Find subscription by Stripe ID
+        // find subscription by Stripe ID
         const dbSub = await prisma.subscription.findUnique({
           where: { providerSubId: subscription.id },
         });
 
         if (dbSub) {
-          // Get current_period_end from subscription item
+          // get current_period_end from subscription item
           const subscriptionItem = subscription.items.data[0];
           const currentPeriodEnd = subscriptionItem?.current_period_end;
 
           if (currentPeriodEnd) {
-            // Calculate days until end of period
+            // calculate days until end of period
             const daysUntilEnd = Math.ceil(
               (currentPeriodEnd * 1000 - Date.now()) / (24 * 60 * 60 * 1000),
             );
 
-            // Update end date
+            // update end date
             await SubscriptionService.extendSubscription(
               dbSub.id,
               daysUntilEnd,
@@ -107,9 +105,11 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.deleted": {
+        console.log("GOT TO deleted");
+        // TODO: HAVEN'T TESTED THIS
         const subscription = event.data.object as Stripe.Subscription;
 
-        // Find and cancel subscription
+        //find and cancel subscription
         const dbSub = await prisma.subscription.findUnique({
           where: { providerSubId: subscription.id },
         });
@@ -121,12 +121,14 @@ export async function POST(req: NextRequest) {
       }
 
       case "invoice.payment_failed": {
+        console.log("GOT TO failed invoice payment");
+        // TODO: HAVEN'T TESTED THIS
         const invoice = event.data.object as Stripe.Invoice;
 
         console.log(`Payment failed for invoice: ${invoice.id}`);
 
-        // Send email notification to user Using Resend
-        // You can get customer email from invoice.customer_email
+        // Send email notification to user
+        // u can get customer email from invoice.customer_email
         // await sendPaymentFailedEmail(invoice.customer_email, invoice.id);
         break;
       }

@@ -18,6 +18,8 @@ import {
 } from "@/types/all.types";
 import { ProFeatureBlur } from "@/components/ProFeatureBlur";
 import { TestUpgradeButton } from "@/components/TestUpgradeButton";
+import { usePaymentSuccess } from "@/hooks/usePaymentSuccess";
+import { SuccessToast } from "@/components/SuccessToast";
 
 export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
   const [homeStats, setHomeStats] = useState<TeamStats[]>([]);
@@ -55,6 +57,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
   );
   const [matchupLoading, setMatchupLoading] = useState(false);
   const [matchupError, setMatchupError] = useState<string | null>(null);
+  const { showSuccess, paymentReference, handleClose } = usePaymentSuccess();
 
   // Predefined odds ranges
   const oddsRanges = [
@@ -567,7 +570,14 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <TestUpgradeButton />
+      {/* Success Toast */}
+      <SuccessToast
+        show={showSuccess}
+        message="🎉 Payment Successful!"
+        description="Your account has been upgraded to Pro. You now have access to all premium features."
+        onClose={handleClose}
+      />
+      {/* <TestUpgradeButton /> */}
       <div className="flex items-center justify-between mb-7 mt-15">
         <h1 className="text-3xl font-bold text-gray-900">Team Analytics</h1>
 

@@ -29,7 +29,7 @@ export function ManageSubscriptionButton({
         }
       } else if (provider === "PAYSTACK") {
         // Paystack doesn't have a built-in customer portal
-        // You can build a custom one or redirect to your settings page
+        // You can build a custom one or redirect to your settings page ?????
         window.location.href = "/settings/subscription";
       }
     } catch (error) {

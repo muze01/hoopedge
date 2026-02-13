@@ -5,8 +5,14 @@ export interface PaystackOptions {
   currency?: string;
   ref?: string;
   metadata?: Record<string, any>;
+  planCode?: string;
+  planInterval?: string;
+  subscriptionLimit?: number;
   callback?: (response: PaystackResponse) => void;
-  onClose?: () => void;
+  onSuccess?: (transaction: PaystackResponse) => void;
+  onLoad?: (response: PaystackLoadResponse) => void;
+  onCancel?: () => void;
+  onError?: (error: PaystackError) => void;
 }
 
 export interface PaystackResponse {
@@ -18,12 +24,18 @@ export interface PaystackResponse {
   trxref: string;
 }
 
+export interface PaystackLoadResponse {
+  id: string;
+  accessCode: string;
+  customer: Record<string, any>;
+}
+
+export interface PaystackError {
+  message: string;
+}
+
 declare global {
   interface Window {
-    PaystackPop: {
-      setup(options: PaystackOptions): {
-        openIframe(): void;
-      };
-    };
+    PaystackPop?: any;
   }
 }

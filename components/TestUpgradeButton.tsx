@@ -34,7 +34,7 @@ export function TestUpgradeButton() {
         setMessage("✅ Upgraded to Pro! Refreshing...");
         setTimeout(() => {
           router.refresh();
-        }, 1000);
+        }, 2000);
       } else {
         setMessage("❌ " + (data.error || "Upgrade failed"));
       }
@@ -61,7 +61,7 @@ export function TestUpgradeButton() {
         setMessage("✅ Subscription cancelled! Refreshing...");
         setTimeout(() => {
           router.refresh();
-        }, 1000);
+        }, 2000);
       } else {
         setMessage("❌ " + (data.error || "Cancellation failed"));
       }
@@ -102,7 +102,7 @@ export function TestUpgradeButton() {
       )}
 
       <div className="text-[10px] text-gray-500 mt-2">
-        Remove this component before production!
+        Will remove this component before production!
       </div>
     </div>
   );

@@ -12,13 +12,13 @@ export const PAYSTACK_CONFIG = {
 
 export const PAYSTACK_PLANS = {
   PRO_MONTHLY: {
-    planCode: process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE!,
+    planCode: process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE || "PLN_monthly",
     amount: 15000, // ₦15,000
     currency: "NGN",
     interval: "monthly",
   },
   PRO_YEARLY: {
-    planCode: process.env.PAYSTACK_PRO_YEARLY_PLAN_CODE!,
+    planCode: process.env.PAYSTACK_PRO_YEARLY_PLAN_CODE || "PLN_yearly",
     amount: 150000, // ₦150,000 (save ₦30,000)
     currency: "NGN",
     interval: "annually",
@@ -43,19 +43,6 @@ export class PaystackAPI {
     }
 
     return data;
-  }
-
-  static async initializeTransaction(params: {
-    email: string;
-    amount: number;
-    plan?: string;
-    metadata?: Record<string, any>;
-    callback_url?: string;
-  }) {
-    return this.request("/transaction/initialize", {
-      method: "POST",
-      body: JSON.stringify(params),
-    });
   }
 
   static async verifyTransaction(reference: string) {

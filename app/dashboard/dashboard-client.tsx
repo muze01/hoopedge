@@ -5,16 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { UserRole } from "@/types/all.types";
+import { SubscriptionStatusBadge } from "@/components/SubscriptionStatusBadge";
 
 type Session = typeof auth.$Infer.Session;
 type DashboardClientProps = {
   session: Session | null;
   userRole: UserRole;
+  subscription?: {
+    status: "ACTIVE" | "CANCELLED" | "EXPIRED" | "TRIAL";
+    endDate: Date | null;
+    provider: "STRIPE" | "PAYSTACK" | "FLUTTERWAVE" | "MANUAL";
+  } | null;
 };
 
 export default function DashboardClientPage({
   session,
   userRole,
+  subscription,
 }: DashboardClientProps) {
   const router = useRouter();
   const user = session?.user;
@@ -63,10 +70,18 @@ export default function DashboardClientPage({
               </div>
             </div>
 
+            {/* Subscription Status - Show for all users */}
+            <div className="mt-8">
+              <SubscriptionStatusBadge
+                role={userRole}
+                subscription={subscription}
+              />
+            </div>
+
             {/* Account Status */}
-            <div className="mt-8 rounded-xl border border-blue-200 bg-blue-50 p-5">
+            <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
               <h2 className="mb-4 text-sm font-semibold text-blue-900">
-                Account Status
+                Account Details
               </h2>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">
@@ -79,49 +94,50 @@ export default function DashboardClientPage({
 
                 <div>
                   <span className="text-gray-600">Email verified:</span>
-                  <span className="ml-2 text-gray-900">
-                    {user?.emailVerified ? "Yes" : "No"}
+                  <span className="ml-2 text-green-600">
+                    {user?.emailVerified ? "✓ Yes" : "✗ No"}
                   </span>
-                </div>
-
-                <div>
-                  <span className="text-gray-600">Account type:</span>
-                  <span
-                    className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      userRole === "FREE"
-                        ? "bg-red-100 text-gray-800"
-                        : "bg-green-100 text-indigo-800"
-                    }`}
-                  >
-                    {userRole}
-                  </span>{" "}
                 </div>
 
                 <div className="overflow-hidden">
                   <span className="text-gray-600">User ID:</span>
-                  <span className="ml-2 block truncate text-gray-500">
+                  <span className="ml-2 block truncate text-gray-500 font-mono text-xs">
                     {user?.id}
                   </span>
                 </div>
+
+                {subscription && subscription.endDate && (
+                  <div>
+                    <span className="text-gray-600">
+                      {subscription.status === "ACTIVE"
+                        ? "Next billing:"
+                        : "Access until:"}
+                    </span>
+                    <span className="ml-2 text-gray-900">
+                      {new Date(subscription.endDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Upgrade Banner - Only for FREE users */}
             {userRole === "FREE" && (
-              <div className="mb-8 mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+              <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-yellow-900">
-                      Unlock Pro Analytics
+                      🚀 Unlock Pro Analytics
                     </h3>
                     <p className="text-sm text-yellow-800 mt-1">
-                      Get access to advanced HT filters, deeper odds breakdowns,
-                      and upcoming FT & quarter analysis.
+                      Get access to Odds Analysis, Matchup Analyzer, and
+                      unlimited historical data.
                     </p>
                   </div>
 
                   <Link
                     href="/pricing"
-                    className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-600 transition"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-600 transition whitespace-nowrap"
                   >
                     Upgrade to Pro
                   </Link>

@@ -29,14 +29,22 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      amount: planConfig.amount * 100, // Convert to kobo
+      amount: planConfig.amount * 100, // convert to kobo
       reference,
+      planCode: planConfig.planCode,
       metadata: {
         userId: session.user.id,
         userEmail: session.user.email,
+        userName: session.user.name,
         plan: "PRO",
-        planCode: planConfig.planCode,
         interval: planConfig.interval,
+        custom_fields: [
+          {
+            display_name: "User ID",
+            variable_name: "user_id",
+            value: session.user.id,
+          },
+        ],
       },
     });
   } catch (error) {

@@ -11,7 +11,7 @@ export default async function PricingPage() {
   });
 
   // Detect user location (you can use a service or IP-based detection)
-  const isNigerian = true; // Replace with actual detection logic
+  const isNigerian = false; // TODO: Replace with actual detection logic
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-12 px-4">
@@ -34,6 +34,7 @@ export default async function PricingPage() {
               </h2>
               <div className="flex items-baseline">
                 <span className="text-4xl sm:text-5xl font-bold text-gray-900">
+                  {/* if nigeria is true then we show in local currency, ultimately track country currency and display in denomination */}
                   $0
                 </span>
                 <span className="text-gray-600 ml-2 text-sm sm:text-base">
@@ -83,6 +84,7 @@ export default async function PricingPage() {
               </h2>
               <div className="flex items-baseline">
                 <span className="text-4xl sm:text-5xl font-bold text-white">
+                  {/* if nigeria is true then we show in local currency, ultimately track country currency and display in denomination */}
                   $29
                 </span>
                 <span className="text-blue-100 ml-2 text-sm sm:text-base">

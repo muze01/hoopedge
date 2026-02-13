@@ -53,27 +53,37 @@ export function PaystackCheckoutButton({
         throw new Error(data.error || "Failed to initialize payment");
       }
 
-      // Use Paystack Inline
-      const handler = window.PaystackPop.setup({
+      // Create new Paystack instance
+      const popup = new window.PaystackPop();
+
+      // Use newTransaction method (synchronous)
+      popup.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
         email: email,
         amount: data.amount, // Amount in kobo
         currency: "NGN",
         ref: data.reference,
         metadata: data.metadata,
-        callback: function (response) {
-          // Payment successful
-          console.log("Payment successful:", response);
-          window.location.href = `/analytics?success=true&reference=${response.reference}`;
+        planCode: data.planCode, // If using subscription
+        onSuccess: (transaction: any) => {
+          console.log("Payment successful:", transaction);
+          // Redirect to analytics with success flag
+          window.location.href = `/analytics?success=true&reference=${transaction.reference}`;
         },
-        onClose: function () {
-          // User closed the payment modal
-          console.log("Payment modal closed");
+        onLoad: (response: any) => {
+          console.log("Transaction loaded:", response);
+          setLoading(false); // Stop loading when popup shows
+        },
+        onCancel: () => {
+          console.log("Payment cancelled by user");
+          setLoading(false);
+        },
+        onError: (error: any) => {
+          console.error("Payment error:", error);
+          alert(`Payment failed: ${error.message}`);
           setLoading(false);
         },
       });
-
-      handler.openIframe();
     } catch (error) {
       console.error("Payment initialization error:", error);
       alert("An error occurred. Please try again.");

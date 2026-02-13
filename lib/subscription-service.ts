@@ -66,13 +66,24 @@ export class SubscriptionService {
 
   /**
    * Get user's active subscription
+   * Active = status is ACTIVE OR (status is CANCELLED but endDate hasn't passed)
    */
   static async getActiveSubscription(userId: string) {
     return await prisma.subscription.findFirst({
       where: {
         userId,
-        status: "ACTIVE",
-        OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+        OR: [
+          // Active subscriptions
+          {
+            status: "ACTIVE",
+            OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+          },
+          // Cancelled but still within billing period
+          {
+            status: "CANCELLED",
+            endDate: { gt: new Date() },
+          },
+        ],
       },
       orderBy: { createdAt: "desc" },
     });
@@ -104,6 +115,7 @@ export class SubscriptionService {
 
   /**
    * Cancel specific subscription
+   * User keeps access until endDate (end of billing period)
    */
   static async cancelSubscription(subscriptionId: string) {
     const subscription = await prisma.subscription.update({
@@ -115,11 +127,19 @@ export class SubscriptionService {
       include: { user: true },
     });
 
-    // Update user role back to FREE
-    await prisma.user.update({
-      where: { id: subscription.userId },
-      data: { role: "FREE" },
-    });
+    // Check if subscription has already expired
+    const hasExpired =
+      subscription.endDate && subscription.endDate < new Date();
+
+    // Only downgrade if already expired, otherwise let it expire naturally
+    if (hasExpired) {
+      await prisma.user.update({
+        where: { id: subscription.userId },
+        data: { role: "FREE" },
+      });
+    }
+    // If not expired, user keeps PRO access until endDate
+    // The cron job will handle downgrading when endDate passes
 
     return subscription;
   }
@@ -127,28 +147,44 @@ export class SubscriptionService {
   /**
    * Expire subscriptions that have passed their end date
    * Run this as a cron job
+   * This handles BOTH active subscriptions that expired AND cancelled subscriptions
    */
   static async expireSubscriptions() {
     const expired = await prisma.subscription.findMany({
       where: {
-        status: "ACTIVE",
-        endDate: { lt: new Date() },
+        OR: [
+          // Active subscriptions that expired
+          {
+            status: "ACTIVE",
+            endDate: { lt: new Date() },
+          },
+          // Cancelled subscriptions that reached end of billing period
+          {
+            status: "CANCELLED",
+            endDate: { lt: new Date() },
+          },
+        ],
       },
       include: { user: true },
     });
 
     for (const sub of expired) {
-      // Update subscription status
+      // Update subscription status to EXPIRED
       await prisma.subscription.update({
         where: { id: sub.id },
         data: { status: "EXPIRED" },
       });
 
-      // Downgrade user to FREE
-      await prisma.user.update({
-        where: { id: sub.userId },
-        data: { role: "FREE" },
-      });
+      // Check if user has any other active subscriptions
+      const otherActiveSub = await this.getActiveSubscription(sub.userId);
+
+      // Only downgrade if no other active subscription
+      if (!otherActiveSub) {
+        await prisma.user.update({
+          where: { id: sub.userId },
+          data: { role: "FREE" },
+        });
+      }
     }
 
     return expired;

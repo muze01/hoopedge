@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏀 HoopEdge - Basketball Analytics Platform
 
-## Getting Started
+A professional basketball analytics platform with subscription-based access to advanced statistics, odds analysis, and matchup predictions.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Free Tier
+- Team performance charts and tables
+- Home & away statistics
+- Last N games filtering
+- Basic halftime analytics
+
+### Pro Tier 🔥
+- **Odds Analysis** - Distribution charts and team recurrence patterns
+- **Matchup Analyzer** - Head-to-head predictions with historical data
+- Unlimited league access
+- Full historical game data
+- Priority support
+
+## 🚀 Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Better Auth
+- **Payments**: 
+  - Stripe (International)
+  - Paystack (Nigeria)
+- **UI**: Tailwind CSS + shadcn/ui
+- **Charts**: Recharts
+- **Styling**: Lucide Icons
+
+
+## 🧪 Testing Payments
+
+### Stripe (International)
+
+1. **Use test card**
+```
+Card: 4242 4242 4242 4242
+Expiry: Any future date
+CVC: Any 3 digits
+ZIP: Any 5 digits
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Paystack (Nigeria)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Test Card:**
+```
+Card: 5060 6666 6666 6666 666
+CVV: 123
+PIN: 1234
+OTP: 123456
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔐 Authentication Flow
 
-## Learn More
+1. User signs up with email/password
+2. Email verification sent
+3. User verifies email
+4. Access granted to free tier
+5. User can upgrade to Pro via Stripe/Paystack
+6. Or signIn with google
 
-To learn more about Next.js, take a look at the following resources:
+## 📧 Support
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+For issues or questions:
+- Open a GitHub issue
+- Contact: https://x.com/Its__Muze
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🙏 Acknowledgments
 
-## Deploy on Vercel
+- Basketball data providers
+- Stripe & Paystack for payment processing
+- shadcn/ui for beautiful components
+- Etc
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Built with ❤️ for basketball analytics enthusiasts**

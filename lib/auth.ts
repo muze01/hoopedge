@@ -81,9 +81,15 @@ export const auth = betterAuth({
             trustedProviders: ["google"]
         }
     },
-    // session: { expiresIn: 30 },
+    session: { 
+        cookieCache: {
+            enabled: true,
+            maxAge: 5 * 60 // Cache duration in seconds (5 minutes)
+        },
+        
+    },
     hooks: {
-        // this doesn't still work...
+        // TODO: this doesn't still work...SENDING MAIL TO USERS THAT SIGNUP USING SOCIALS
         after: createAuthMiddleware(async (ctx) => {
             // Handle social sign-up (Google/ etc)
             if (ctx.path === "/sign-in/social") {
