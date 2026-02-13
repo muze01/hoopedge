@@ -1,6 +1,7 @@
 # 🏀 HoopEdge - Basketball Analytics Platform
 
 A professional basketball analytics platform with subscription-based access to advanced statistics, odds analysis, and matchup predictions.
+**Live Site:** [HoopEdge](https://hoopedge.vercel.app/)
 
 ## ✨ Features
 
