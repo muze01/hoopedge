@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as Papa from "papaparse";
-import { prisma } from "../lib/auth";
+import { prisma } from "../lib/db";
 
 interface GameRow {
   date: string;
@@ -269,4 +269,4 @@ if (require.main === module) {
     });
 }
 
-export { prisma };
+// export { prisma };

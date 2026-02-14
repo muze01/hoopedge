@@ -5,7 +5,7 @@ import {
   TeamMatchupStats,
   GameLogEntry,
 } from "@/types/all.types";
-import { prisma } from "../auth";
+import { prisma } from "@/lib/db";
 
 export async function analyzeMatchup(
   options: MatchupOptions,

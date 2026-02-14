@@ -2,7 +2,7 @@ import AnalyticsClient from "./analytics-client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma } from "../../lib/auth";
+import { prisma } from "@/lib/db";
 import { SubscriptionService } from "@/lib/subscription-service";
 
 export default async function AnalyticsPage({

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { AnalyticsOptions, AnalyticsResult, TeamStats } from "@/types/all.types";
 
 export async function calculateTeamAnalytics(

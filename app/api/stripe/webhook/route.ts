@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { SubscriptionService } from "@/lib/subscription-service";
-import { prisma } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {

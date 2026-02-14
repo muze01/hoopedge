@@ -1,4 +1,4 @@
-import { prisma } from "./auth";
+import { prisma } from "@/lib/db";
 
 export type SubscriptionPlan = "FREE" | "PRO" | "ADMIN";
 export type SubscriptionStatus = "ACTIVE" | "CANCELLED" | "EXPIRED" | "TRIAL";

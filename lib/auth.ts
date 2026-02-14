@@ -1,19 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "./generated/prisma/client";
+import { PrismaClient } from "./generated/prisma/client"; 
 import { nextCookies } from "better-auth/next-js";
 import { emailService } from "@/services/email-service";
-import { PrismaPg } from '@prisma/adapter-pg';
 import { createAuthMiddleware } from "better-auth/api";
-// import type { User } from "better-auth";
-
-const adapter = new PrismaPg({ 
-    connectionString: process.env.DATABASE_URL 
-});
-export const prisma = new PrismaClient({ 
-    adapter,
-    errorFormat: "pretty"
-});
+import { prisma } from "./db";
 
 export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL,
