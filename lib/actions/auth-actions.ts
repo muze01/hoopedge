@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "../auth";
 import { headers } from "next/headers";
 import { APIError } from "better-auth/api";
+import { prisma } from "../db";
 
 export const signUp = async (email: string, password: string, name: string) => {
     try {
@@ -11,7 +12,7 @@ export const signUp = async (email: string, password: string, name: string) => {
                 email,
                 password,
                 name,
-                callbackURL: "/dashboard" // should this be dashboard or verified?
+                callbackURL: "/dashboard"
             }
         })
 
@@ -100,6 +101,13 @@ export const signOut = async () => {
 
 export const forgotPassword = async (email: string) => {
     try {
+        const userExists = await checkUserExists(email);
+        if (!userExists) {
+            // console.log(`⚠️ Password reset requested for non-existent email: ${email}`);
+            
+            return { success: true, emailSent: false };
+        }
+        
         const result = await auth.api.requestPasswordReset({
             body: {
                 email,
@@ -170,6 +178,22 @@ export const resendVerificationEmail = async (email: string) => {
         }
         console.error("ResendVerification Error", error);
         throw error;
+    }
+}
+
+async function checkUserExists(email: string): Promise<boolean> {
+    try {
+        
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true }
+        });
+        
+        await prisma.$disconnect();
+        return !!user;
+    } catch (error) {
+        console.error("Error checking user existence:", error);
+        return false;
     }
 }
 
