@@ -1,17 +1,40 @@
-import { Resend } from "resend";
+// import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 // const fromEmail = process.env.EMAIL_FROM || 'noreply@hoopedge.com';
+
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 const fromEmail = process.env.EMAIL_FROM!;
 const appName = "HoopEdge"; // Change this to your app name
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+
+// Set-up
+const createTransporter = (): Transporter => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+};
+const transporter = createTransporter();
+transporter.verify((error) => {
+  if (error) {
+    console.error("❌ Gmail transporter error:", error);
+  } else {
+    console.log("✅ Gmail transporter ready");
+  }
+});
 
 export const emailService = {
   // Send password reset email
   sendPasswordResetEmail: async (email: string, resetUrl: string) => {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await transporter.sendMail({
         from: fromEmail,
         to: email,
         subject: `Reset Your ${appName} Password`,
@@ -183,7 +206,7 @@ export const emailService = {
   // Send email verification email
   sendVerificationEmail: async (email: string, verificationUrl: string) => {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await transporter.sendMail({
         from: fromEmail,
         to: email,
         subject: `Verify Your ${appName} Email Address`,
@@ -352,12 +375,12 @@ export const emailService = {
   // Send welcome email (after successful verification)
   sendWelcomeEmail: async (email: string, name: string) => {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await transporter.sendMail({
         from: fromEmail,
         to: email,
         subject: `Welcome to ${appName}!`,
         html: `
-                   <!DOCTYPE html>
+                  <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
