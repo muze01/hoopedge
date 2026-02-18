@@ -16,7 +16,7 @@ export async function analyzeMatchup(
     leagueId,
     minOdds = 1.7,
     maxOdds = 1.79,
-    lastNGames,
+    oddsType = "over",
   } = options;
 
   // Find the teams
@@ -52,7 +52,6 @@ export async function analyzeMatchup(
       odds: { orderBy: { line: "asc" } },
     },
     orderBy: { date: "desc" },
-    take: lastNGames,
   });
 
   // Get away team's away games
@@ -67,7 +66,6 @@ export async function analyzeMatchup(
       odds: { orderBy: { line: "asc" } },
     },
     orderBy: { date: "desc" },
-    take: lastNGames,
   });
 
   // Get head-to-head history
@@ -95,6 +93,7 @@ export async function analyzeMatchup(
     homeTeamHomeGames,
     minOdds,
     maxOdds,
+    oddsType,
   );
 
   // Process away team stats
@@ -104,6 +103,7 @@ export async function analyzeMatchup(
     awayTeamAwayGames,
     minOdds,
     maxOdds,
+    oddsType,
   );
 
   // Process head-to-head history
@@ -112,8 +112,17 @@ export async function analyzeMatchup(
     const awayHalftime = game.awayFirst + game.awaySecond;
     const halftimeTotal = homeHalftime + awayHalftime;
 
-    const oddsLine = findQualifyingOddsLine(game.odds, minOdds, maxOdds);
-    const wentOver = oddsLine !== null && halftimeTotal > oddsLine;
+    const oddsLine = findQualifyingOddsLine(
+      game.odds,
+      minOdds,
+      maxOdds,
+      oddsType,
+    );
+    const hit =
+      oddsLine !== null &&
+      (oddsType === "over"
+        ? halftimeTotal > oddsLine
+        : halftimeTotal < oddsLine);
 
     return {
       date: game.date.toISOString(),
@@ -123,7 +132,7 @@ export async function analyzeMatchup(
       awayHalftime,
       halftimeTotal,
       oddsLine,
-      wentOver,
+      wentOver: hit, // kept as wentOver for backwards compat, represents "hit" now
     };
   });
 
@@ -131,6 +140,7 @@ export async function analyzeMatchup(
     homeTeam: homeStats,
     awayTeam: awayStats,
     headToHeadHistory,
+    oddsType,
   };
 }
 
@@ -140,11 +150,12 @@ function processTeamStats(
   games: any[],
   minOdds: number,
   maxOdds: number,
+  oddsType: "over" | "under",
 ): TeamMatchupStats {
   const gameLog: GameLogEntry[] = [];
   let totalHalftimePoints = 0;
   let totalHalftimeConceded = 0;
-  let overOddsCount = 0;
+  let oddsHitCount = 0;
   let wins = 0;
   let losses = 0;
 
@@ -161,12 +172,20 @@ function processTeamStats(
     totalHalftimePoints += teamHalftime;
     totalHalftimeConceded += oppHalftime;
 
-    const oddsLine = findQualifyingOddsLine(game.odds, minOdds, maxOdds);
-    const wentOver = oddsLine !== null && halftimeTotal > oddsLine;
+    const oddsLine = findQualifyingOddsLine(
+      game.odds,
+      minOdds,
+      maxOdds,
+      oddsType,
+    );
+    const hit =
+      oddsLine !== null &&
+      (oddsType === "over"
+        ? halftimeTotal > oddsLine
+        : halftimeTotal < oddsLine); // "hit" — true when the bet condition was met
 
-    if (wentOver) overOddsCount++;
+    if (hit) oddsHitCount++;
 
-    // Determine result
     let result: "win" | "loss" | "draw";
     const teamTotal = isHome ? game.homeTotalPoints : game.awayTotalPoints;
     const oppTotal = isHome ? game.awayTotalPoints : game.homeTotalPoints;
@@ -188,7 +207,7 @@ function processTeamStats(
       teamHalftime,
       oppHalftime,
       oddsLine,
-      wentOver,
+      wentOver: hit,
       result,
     });
   }
@@ -202,9 +221,9 @@ function processTeamStats(
     avgHalftimePoints: gamesPlayed > 0 ? totalHalftimePoints / gamesPlayed : 0,
     avgHalftimeConceded:
       gamesPlayed > 0 ? totalHalftimeConceded / gamesPlayed : 0,
-    overOddsCount,
+    overOddsCount: oddsHitCount,
     overOddsPercentage:
-      gamesPlayed > 0 ? (overOddsCount / gamesPlayed) * 100 : 0,
+      gamesPlayed > 0 ? (oddsHitCount / gamesPlayed) * 100 : 0,
     wins,
     losses,
     gameLog,
@@ -215,13 +234,16 @@ function findQualifyingOddsLine(
   odds: any[],
   minOdds: number,
   maxOdds: number,
+  oddsType: "over" | "under",
 ): number | null {
+  const oddField = oddsType === "over" ? "overOdd" : "underOdd";
+
   // Step 1: Find .5 line within user's selected range
   for (const oddsLine of odds) {
     if (
       oddsLine.line % 1 === 0.5 &&
-      oddsLine.overOdd >= minOdds &&
-      oddsLine.overOdd <= maxOdds
+      oddsLine[oddField] >= minOdds &&
+      oddsLine[oddField] <= maxOdds
     ) {
       return oddsLine.line;
     }
@@ -238,20 +260,18 @@ function findQualifyingOddsLine(
     { min: 1.4, max: 1.49 },
   ];
 
-  // Find which range user selected
   const userRangeIndex = fallbackRanges.findIndex(
     (range) => range.min === minOdds && range.max === maxOdds,
   );
 
-  // Try ranges below user's selection
   if (userRangeIndex !== -1) {
     for (let i = userRangeIndex + 1; i < fallbackRanges.length; i++) {
       const range = fallbackRanges[i];
       for (const oddsLine of odds) {
         if (
           oddsLine.line % 1 === 0.5 &&
-          oddsLine.overOdd >= range.min &&
-          oddsLine.overOdd <= range.max
+          oddsLine[oddField] >= range.min &&
+          oddsLine[oddField] <= range.max
         ) {
           return oddsLine.line;
         }
@@ -262,7 +282,7 @@ function findQualifyingOddsLine(
   // Step 3: If still not found and user wanted 1.40+, try anything below 1.40
   if (minOdds >= 1.4) {
     for (const oddsLine of odds) {
-      if (oddsLine.line % 1 === 0.5 && oddsLine.overOdd < 1.4) {
+      if (oddsLine.line % 1 === 0.5 && oddsLine[oddField] < 1.4) {
         return oddsLine.line;
       }
     }

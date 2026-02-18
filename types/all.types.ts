@@ -107,6 +107,7 @@ export interface MatchupResult {
   homeTeam: TeamMatchupStats;
   awayTeam: TeamMatchupStats;
   headToHeadHistory: HeadToHeadGame[];
+  oddsType?: "over" | "under";
 }
 
 export interface TeamOddsRecurrence {
@@ -125,6 +126,7 @@ export interface League {
   name: string;
   country: string | null;
   season: string | null;
+  threshold: number;
 }
 
 export interface TeamSuggestion {
@@ -180,6 +182,7 @@ export interface OddsAnalysisOptions {
   endDate?: Date;
   minOdds?: number; // e.g., 1.70
   maxOdds?: number; // e.g., 1.79
+  oddsType?: "over" | "under";
 }
 
 export interface TeamMatchupStats {
@@ -195,21 +198,11 @@ export interface TeamMatchupStats {
   gameLog: GameLogEntry[];
 }
 
-// export interface GameLogEntry {
-//   date: Date;
-//   opponent: string;
-//   halftimeTotal: number;
-//   teamHalftime: number;
-//   oppHalftime: number;
-//   oddsLine: number | null;
-//   wentOver: boolean;
-//   result: "win" | "loss" | "draw";
-// }
-
 export interface MatchupAnalysisResult {
   homeTeam: TeamMatchupStats;
   awayTeam: TeamMatchupStats;
   headToHeadHistory: HeadToHeadGame[];
+  oddsType?: "over" | "under";
 }
 
 export interface MatchupOptions {
@@ -219,6 +212,7 @@ export interface MatchupOptions {
   minOdds?: number;
   maxOdds?: number;
   lastNGames?: number;
+  oddsType?: "over" | "under";
 }
 
 export interface TeamStats {
@@ -237,6 +231,7 @@ export interface TeamStats {
 export interface AnalyticsResult {
   homeStats: TeamStats[];
   awayStats: TeamStats[];
+  threshold?: number;
 }
 
 export interface AnalyticsOptions {

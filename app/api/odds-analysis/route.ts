@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     const maxOdds = searchParams.get("maxOdds")
       ? parseFloat(searchParams.get("maxOdds")!)
       : 1.79;
+    const oddsType = (searchParams.get("oddsType") || "over") as
+      | "over"
+      | "under";
     const startDate = searchParams.get("startDate")
       ? new Date(searchParams.get("startDate")!)
       : undefined;
@@ -25,6 +28,7 @@ export async function GET(request: NextRequest) {
       endDate,
       minOdds,
       maxOdds,
+      oddsType,
     });
 
     return NextResponse.json({
@@ -34,6 +38,7 @@ export async function GET(request: NextRequest) {
         leagueId,
         minOdds,
         maxOdds,
+        oddsType,
         startDate,
         endDate,
       },

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       if (!leagueId) {
         return NextResponse.json(
           { success: false, error: "League ID required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "Home team, away team, and league are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
     const maxOdds = searchParams.get("maxOdds")
       ? parseFloat(searchParams.get("maxOdds")!)
       : 1.79;
-    const lastNGames = searchParams.get("lastNGames")
-      ? parseInt(searchParams.get("lastNGames")!)
-      : undefined;
+    const oddsType = (searchParams.get("oddsType") || "over") as
+      | "over"
+      | "under";
 
     const result = await analyzeMatchup({
       homeTeamName: homeTeam,
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       leagueId,
       minOdds,
       maxOdds,
-      lastNGames,
+      oddsType,
     });
 
     return NextResponse.json({
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

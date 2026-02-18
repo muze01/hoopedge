@@ -1,16 +1,14 @@
 import { prisma } from "@/lib/db";
-import { AnalyticsOptions, AnalyticsResult, TeamStats } from "@/types/all.types";
+import {
+  AnalyticsOptions,
+  AnalyticsResult,
+  TeamStats,
+} from "@/types/all.types";
 
 export async function calculateTeamAnalytics(
-  options: AnalyticsOptions = {}
+  options: AnalyticsOptions = {},
 ): Promise<AnalyticsResult> {
-  const {
-    leagueId,
-    threshold = 40,
-    lastNGames,
-    startDate,
-    endDate = new Date(),
-  } = options;
+  const { leagueId, lastNGames, startDate, endDate = new Date() } = options;
 
   // Build query filters
   const whereClause: any = {
@@ -23,6 +21,17 @@ export async function calculateTeamAnalytics(
 
   if (startDate) {
     whereClause.date.gte = startDate;
+  }
+
+  let threshold = 40;
+  if (leagueId) {
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      select: { threshold: true },
+    });
+    if (league) {
+      threshold = league.threshold;
+    }
   }
 
   // Fetch all games with team relations
@@ -43,11 +52,9 @@ export async function calculateTeamAnalytics(
     const homeTeamName = game.homeTeam.name;
     const awayTeamName = game.awayTeam.name;
 
-    // Calculate halftime scores
     const homeHalftime = game.homeFirst + game.homeSecond;
     const awayHalftime = game.awayFirst + game.awaySecond;
 
-    // Store home games
     if (!homeGamesByTeam.has(homeTeamName)) {
       homeGamesByTeam.set(homeTeamName, []);
     }
@@ -57,7 +64,6 @@ export async function calculateTeamAnalytics(
       oppHalftime: awayHalftime,
     });
 
-    // Store away games
     if (!awayGamesByTeam.has(awayTeamName)) {
       awayGamesByTeam.set(awayTeamName, []);
     }
@@ -70,44 +76,38 @@ export async function calculateTeamAnalytics(
 
   // Calculate stats for home teams
   const homeStats: TeamStats[] = [];
-  for (const [teamName, games] of homeGamesByTeam.entries()) {
-    // Sort by date descending and take last N if specified
-    const sortedGames = games.sort(
-      (a, b) => b.date.getTime() - a.date.getTime()
+  for (const [teamName, teamGames] of homeGamesByTeam.entries()) {
+    const sortedGames = teamGames.sort(
+      (a, b) => b.date.getTime() - a.date.getTime(),
     );
     const gamesToAnalyze = lastNGames
       ? sortedGames.slice(0, lastNGames)
       : sortedGames;
-
-    const stats = calculateStats(teamName, gamesToAnalyze, threshold);
-    homeStats.push(stats);
+    homeStats.push(calculateStats(teamName, gamesToAnalyze, threshold));
   }
 
   // Calculate stats for away teams
   const awayStats: TeamStats[] = [];
-  for (const [teamName, games] of awayGamesByTeam.entries()) {
-    const sortedGames = games.sort(
-      (a, b) => b.date.getTime() - a.date.getTime()
+  for (const [teamName, teamGames] of awayGamesByTeam.entries()) {
+    const sortedGames = teamGames.sort(
+      (a, b) => b.date.getTime() - a.date.getTime(),
     );
     const gamesToAnalyze = lastNGames
       ? sortedGames.slice(0, lastNGames)
       : sortedGames;
-
-    const stats = calculateStats(teamName, gamesToAnalyze, threshold);
-    awayStats.push(stats);
+    awayStats.push(calculateStats(teamName, gamesToAnalyze, threshold));
   }
 
-  // Sort by average points descending
   homeStats.sort((a, b) => b.avgPoints - a.avgPoints);
   awayStats.sort((a, b) => b.avgPoints - a.avgPoints);
 
-  return { homeStats, awayStats };
+  return { homeStats, awayStats, threshold };
 }
 
 function calculateStats(
   teamName: string,
   games: any[],
-  threshold: number
+  threshold: number,
 ): TeamStats {
   const gamesPlayed = games.length;
 
@@ -131,7 +131,7 @@ function calculateStats(
 
   const aboveThreshold = games.filter((g) => g.teamHalftime > threshold).length;
   const concededAboveThreshold = games.filter(
-    (g) => g.oppHalftime > threshold
+    (g) => g.oppHalftime > threshold,
   ).length;
 
   const wins = games.filter((g) => g.teamHalftime > g.oppHalftime).length;
@@ -159,6 +159,7 @@ export async function getLeagues() {
       name: true,
       country: true,
       season: true,
+      threshold: true,
     },
     orderBy: { name: "asc" },
   });

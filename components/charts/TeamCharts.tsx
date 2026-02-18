@@ -85,9 +85,14 @@ const CustomOddsTooltip = ({ active, payload }: any) => {
 // Team Performance
 export const TeamPerformanceSection: React.FC<
   TeamPerformanceChartProps & {
-    StatsTable: React.ComponentType<{ stats: TeamStats[]; title: string }>;
+    oddsType: "over" | "under";
+    StatsTable: React.ComponentType<{
+      stats: TeamStats[];
+      title: string;
+      oddsType: "over" | "under";
+    }>;
   }
-> = ({ data, title, location, threshold, StatsTable }) => {
+> = ({ data, title, location, threshold, oddsType, StatsTable }) => {
   const sortedData = [...data].sort((a, b) => b.avgPoints - a.avgPoints);
 
   return (
@@ -161,7 +166,7 @@ export const TeamPerformanceSection: React.FC<
       </TabsContent>
 
       <TabsContent value="table" className="mt-0">
-        <StatsTable stats={data} title="" />
+        <StatsTable stats={data} title="" oddsType={oddsType} />
       </TabsContent>
     </Tabs>
   );
@@ -170,16 +175,22 @@ export const TeamPerformanceSection: React.FC<
 // Odds Recurrence
 export const OddsRecurrenceSection: React.FC<
   OddsRecurrenceChartProps & {
+    oddsType: "over" | "under";
     TeamRecurrenceTable: React.ComponentType;
   }
-> = ({
-  data,
-  title = "Teams That Go Over Most Often",
-  TeamRecurrenceTable,
-}) => {
+> = ({ data, oddsType, TeamRecurrenceTable }) => {
   const sortedData = [...data].sort(
     (a, b) => b.totalOccurrences - a.totalOccurrences,
   );
+  const title =
+    oddsType === "over"
+      ? "Teams That Go Over Most Often"
+      : "Teams That Stay Under Most Often";
+
+  const chartDescription =
+    oddsType === "over"
+      ? "Number of times halftime total went over the odds line (stacked by home/away)"
+      : "Number of times halftime total stayed under the odds line (stacked by home/away)";
 
   return (
     <Tabs defaultValue="table" className="w-full pt-3">
@@ -200,10 +211,7 @@ export const OddsRecurrenceSection: React.FC<
       <TabsContent value="chart" className="mt-0">
         <Card>
           <CardHeader>
-            <CardDescription>
-              Number of times halftime total went over the odds line (stacked by
-              home/away)
-            </CardDescription>
+            <CardDescription>{chartDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
@@ -232,7 +240,6 @@ export const OddsRecurrenceSection: React.FC<
                 />
                 <Tooltip content={<CustomOddsTooltip />} />
                 <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="rect" />
-
                 <Bar
                   dataKey="homeOccurrences"
                   stackId="stack"

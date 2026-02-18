@@ -7,9 +7,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
 
     const leagueId = searchParams.get("leagueId") || undefined;
-    const threshold = searchParams.get("threshold")
-      ? parseInt(searchParams.get("threshold")!)
-      : 40;
     const lastNGames = searchParams.get("lastNGames")
       ? parseInt(searchParams.get("lastNGames")!)
       : undefined;
@@ -19,25 +16,27 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate")
       ? new Date(searchParams.get("endDate")!)
       : new Date();
+
+    // Odds analysis params (independent of team stats)
     const minOdds = searchParams.get("minOdds")
       ? parseFloat(searchParams.get("minOdds")!)
-      : 1.7; // note that these are your default odds settings, i think you should look round and lower
+      : 1.7;
     const maxOdds = searchParams.get("maxOdds")
       ? parseFloat(searchParams.get("maxOdds")!)
       : 1.79;
+    const oddsType = (searchParams.get("oddsType") || "over") as
+      | "over"
+      | "under";
 
-    // Check if we should include odds analysis (for initial load)
     const includeOdds = searchParams.get("includeOdds") !== "false";
 
     const analytics = await calculateTeamAnalytics({
       leagueId,
-      threshold,
       lastNGames,
       startDate,
       endDate,
     });
 
-    // Get available leagues for filters
     const leagues = await getLeagues();
 
     const response: any = {
@@ -48,16 +47,15 @@ export async function GET(request: NextRequest) {
       leagues,
       filters: {
         leagueId,
-        threshold,
         lastNGames,
         startDate,
         endDate,
         minOdds,
         maxOdds,
+        oddsType,
       },
     };
 
-    // Only calculate odds if requested
     if (includeOdds) {
       const oddsAnalysis = await analyzeOddsPerformance({
         leagueId,
@@ -65,6 +63,7 @@ export async function GET(request: NextRequest) {
         endDate,
         minOdds,
         maxOdds,
+        oddsType,
       });
       response.data.oddsAnalysis = oddsAnalysis;
     }

@@ -15,6 +15,7 @@ export async function analyzeOddsPerformance(
     endDate = new Date(),
     minOdds = 1.7,
     maxOdds = 1.79,
+    oddsType = "over",
   } = options;
 
   // Build query filters
@@ -58,17 +59,14 @@ export async function analyzeOddsPerformance(
     { home: number; away: number; homeGames: number; awayGames: number }
   >();
 
-  // Process each game
   for (const game of games) {
     const homeTeamName = game.homeTeam.name;
     const awayTeamName = game.awayTeam.name;
 
-    // Calculate halftime total
     const homeHalftime = game.homeFirst + game.homeSecond;
     const awayHalftime = game.awayFirst + game.awaySecond;
     const halftimeTotal = homeHalftime + awayHalftime;
 
-    // Initialize team tracking
     if (!teamOccurrences.has(homeTeamName)) {
       teamOccurrences.set(homeTeamName, {
         home: 0,
@@ -90,69 +88,17 @@ export async function analyzeOddsPerformance(
     teamOccurrences.get(awayTeamName)!.awayGames++;
 
     // Find qualifying odds line with cascading fallback
-    let selectedLine: number | null = null;
+    const { selectedLine, usedFallbackBelow140 } = findQualifyingOddsLine(
+      game.odds,
+      minOdds,
+      maxOdds,
+      oddsType,
+    );
 
-    // Step 1: Look for .5 lines within the user's selected range
-    for (const oddsLine of game.odds) {
-      if (
-        oddsLine.line % 1 === 0.5 &&
-        oddsLine.overOdd >= minOdds &&
-        oddsLine.overOdd <= maxOdds
-      ) {
-        selectedLine = oddsLine.line;
-        break;
-      }
+    if (usedFallbackBelow140) {
+      distribution.fallbackBelow140 = true;
     }
 
-    // Step 2: If not found, cascade down through lower ranges.
-    if (!selectedLine) {
-      // Define all ranges from high to low
-      const fallbackRanges = [
-        { min: 2.0, max: 2.09 },
-        { min: 1.9, max: 1.99 },
-        { min: 1.8, max: 1.89 },
-        { min: 1.7, max: 1.79 },
-        { min: 1.6, max: 1.69 },
-        { min: 1.5, max: 1.59 },
-        { min: 1.4, max: 1.49 },
-      ];
-
-      // Find which range user selected
-      const userRangeIndex = fallbackRanges.findIndex(
-        (range) => range.min === minOdds && range.max === maxOdds,
-      );
-
-      // Try ranges below user's selection
-      if (userRangeIndex !== -1) {
-        for (let i = userRangeIndex + 1; i < fallbackRanges.length; i++) {
-          const range = fallbackRanges[i];
-          for (const oddsLine of game.odds) {
-            if (
-              oddsLine.line % 1 === 0.5 &&
-              oddsLine.overOdd >= range.min &&
-              oddsLine.overOdd <= range.max
-            ) {
-              selectedLine = oddsLine.line;
-              break;
-            }
-          }
-          if (selectedLine) break;
-        }
-      }
-    }
-
-    // Step 3: If still not found and user wanted 1.40+, try anything below 1.40
-    if (!selectedLine && minOdds >= 1.4) {
-      for (const oddsLine of game.odds) {
-        if (oddsLine.line % 1 === 0.5 && oddsLine.overOdd < 1.4) {
-          selectedLine = oddsLine.line;
-          distribution.fallbackBelow140 = true;
-          break;
-        }
-      }
-    }
-
-    // Categorize into distribution
     if (selectedLine === null) {
       distribution.noOddsAvailable++;
       continue;
@@ -160,13 +106,21 @@ export async function analyzeOddsPerformance(
 
     distribution.analyzedGames++;
 
+    // For "over": hit = halftimeTotal > line. For "under": hit = halftimeTotal < line.
+    const hitCondition =
+      oddsType === "over"
+        ? halftimeTotal > selectedLine
+        : halftimeTotal < selectedLine;
+
     if (halftimeTotal < selectedLine) {
       distribution.belowLine++;
     } else if (halftimeTotal === selectedLine) {
       distribution.equalToLine++;
     } else {
       distribution.aboveLine++;
-      // Track teams that went over
+    }
+
+    if (hitCondition) {
       teamOccurrences.get(homeTeamName)!.home++;
       teamOccurrences.get(awayTeamName)!.away++;
     }
@@ -193,11 +147,71 @@ export async function analyzeOddsPerformance(
     });
   }
 
-  // Sort by total occurrences descending
   teamRecurrences.sort((a, b) => b.totalOccurrences - a.totalOccurrences);
 
   return {
     distribution,
     teamRecurrences,
   };
+}
+
+function findQualifyingOddsLine(
+  odds: any[],
+  minOdds: number,
+  maxOdds: number,
+  oddsType: "over" | "under",
+): { selectedLine: number | null; usedFallbackBelow140: boolean } {
+  const oddField = oddsType === "over" ? "overOdd" : "underOdd";
+
+  // Step 1: Find .5 line within user's selected range
+  for (const oddsLine of odds) {
+    if (
+      oddsLine.line % 1 === 0.5 &&
+      oddsLine[oddField] >= minOdds &&
+      oddsLine[oddField] <= maxOdds
+    ) {
+      return { selectedLine: oddsLine.line, usedFallbackBelow140: false };
+    }
+  }
+
+  // Step 2: Cascade down through lower ranges
+  const fallbackRanges = [
+    { min: 2.0, max: 2.09 },
+    { min: 1.9, max: 1.99 },
+    { min: 1.8, max: 1.89 },
+    { min: 1.7, max: 1.79 },
+    { min: 1.6, max: 1.69 },
+    { min: 1.5, max: 1.59 },
+    { min: 1.4, max: 1.49 },
+  ];
+
+  const userRangeIndex = fallbackRanges.findIndex(
+    (range) => range.min === minOdds && range.max === maxOdds,
+  );
+
+  if (userRangeIndex !== -1) {
+    for (let i = userRangeIndex + 1; i < fallbackRanges.length; i++) {
+      const range = fallbackRanges[i];
+      for (const oddsLine of odds) {
+        if (
+          oddsLine.line % 1 === 0.5 &&
+          oddsLine[oddField] >= range.min &&
+          oddsLine[oddField] <= range.max
+        ) {
+          return { selectedLine: oddsLine.line, usedFallbackBelow140: false };
+        }
+      }
+    }
+  }
+
+  // Step 3: If still not found and user wanted 1.40+, try anything below 1.40
+  if (minOdds >= 1.4) {
+    for (const oddsLine of odds) {
+      if (oddsLine.line % 1 === 0.5 && oddsLine[oddField] < 1.4) {
+        return { selectedLine: oddsLine.line, usedFallbackBelow140: true };
+      }
+    }
+  }
+
+  return { selectedLine: null, usedFallbackBelow140: false };
 }
