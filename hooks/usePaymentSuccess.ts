@@ -17,9 +17,8 @@ export function usePaymentSuccess() {
       setShowSuccess(true);
       setPaymentReference(reference);
 
-      // Clean up URL after showing toast (optional)
+      // Remove query params from URL (success=true) without page reload
       const timer = setTimeout(() => {
-        // Remove query params from URL without page reload
         const url = new URL(window.location.href);
         url.searchParams.delete("success");
         url.searchParams.delete("reference");

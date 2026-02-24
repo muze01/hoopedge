@@ -15,6 +15,7 @@ const createTransporter = (): Transporter => {
     },
   });
 };
+
 const transporter = createTransporter();
 transporter.verify((error) => {
   if (error) {

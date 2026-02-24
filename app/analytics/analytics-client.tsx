@@ -1,6 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import {
   TeamPerformanceSection,
   OddsRecurrenceSection,
@@ -19,579 +29,232 @@ import {
 import { ProFeatureBlur } from "@/components/ProFeatureBlur";
 import { TestUpgradeButton } from "@/components/TestUpgradeButton";
 import { usePaymentSuccess } from "@/hooks/usePaymentSuccess";
-import { SuccessToast } from "@/components/SuccessToast";
+// import { SuccessToast } from "@/components/PaymentSuccessHandler";
+import {
+  useLeagues,
+  useAnalytics,
+  useOddsAnalysis,
+  useMatchup,
+  useTeamSearch,
+} from "@/hooks/use-analytics";
 import { OddsFilterControls } from "@/components/OddsFilterContols";
+import { StatsTable } from "@/components/StatsTable";
+import { OddsDistributionCard } from "@/components/OddsDistribution";
+import { TeamRecurrenceTable } from "@/components/TeamRecurrenceTable";
+import { ColInfo } from "@/components/ColInfo";
 
 export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
-  const [homeStats, setHomeStats] = useState<TeamStats[]>([]);
-  const [awayStats, setAwayStats] = useState<TeamStats[]>([]);
-  const [oddsDistribution, setOddsDistribution] =
-    useState<OddsDistribution | null>(null);
-  const [teamRecurrences, setTeamRecurrences] = useState<TeamOddsRecurrence[]>(
-    [],
-  );
-  const [leagues, setLeagues] = useState<League[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [oddsLoading, setOddsLoading] = useState(false);
-  const [leaguesLoaded, setLeaguesLoaded] = useState(false);
-
-  // League-driven threshold (read-only, fetched from DB via league list)
-  const [threshold, setThreshold] = useState(40);
-
   const featureAccess = getFeatureAccess(userRole);
+  const { showSuccess, paymentReference, handleClose } = usePaymentSuccess();
 
-  // --- Global filters (Team Stats section) ---
+  // Filter state (drives query keys) 
   const [selectedLeague, setSelectedLeague] = useState<string>("");
   const [lastNGames, setLastNGames] = useState<string>("");
   const [appliedLastNGames, setAppliedLastNGames] = useState<
     number | undefined
   >(undefined);
-  const [useLastN, setUseLastN] = useState(false);
 
-  // --- Odds Analysis section — independent state ---
+  // Odds Analysis section
   const [oddsMinOdds, setOddsMinOdds] = useState(1.7);
   const [oddsMaxOdds, setOddsMaxOdds] = useState(1.79);
   const [oddsType, setOddsType] = useState<"over" | "under">("over");
 
-  // --- Matchup Analyzer section — independent state ---
+  // Matchup section: team selection + triggered query
+  const [homeTeamInput, setHomeTeamInput] = useState("");
+  const [awayTeamInput, setAwayTeamInput] = useState("");
   const [matchupMinOdds, setMatchupMinOdds] = useState(1.7);
   const [matchupMaxOdds, setMatchupMaxOdds] = useState(1.79);
   const [matchupOddsType, setMatchupOddsType] = useState<"over" | "under">(
     "over",
   );
+  const [matchupEnabled, setMatchupEnabled] = useState(false);
+
+  // Data queries
+  // Leagues: fetched once on mount, used to seed selectedLeague
+  const { data: leaguesData, isLoading: leaguesLoading } = useLeagues();
+  const leagues: League[] = leaguesData?.leagues ?? [];
+
+  // Set default league once leagues load (Liga ACB preferred)
+  const [leagueInitialized, setLeagueInitialized] = useState(false);
+  if (!leagueInitialized && leagues.length > 0) {
+    const defaultLeague =
+      leagues.find((l) => l.name === "Liga ACB") ?? leagues[0];
+    setSelectedLeague(defaultLeague.id);
+    setLeagueInitialized(true);
+  }
+
+  // Derived threshold from selected league
+  const threshold =
+    leagues.find((l) => l.id === selectedLeague)?.threshold ?? 40;
+
+  // Team stats: refetches automatically when league or lastNGames changes
+  const { data: analyticsData, isLoading: loading } = useAnalytics(
+    selectedLeague,
+    appliedLastNGames,
+  );
+  const homeStats: TeamStats[] = analyticsData?.data.homeStats ?? [];
+  const awayStats: TeamStats[] = analyticsData?.data.awayStats ?? [];
+
+  // Odds analysis: refetches on league or filter changes
+  const { data: oddsData, isLoading: oddsLoading } = useOddsAnalysis(
+    selectedLeague,
+    oddsMinOdds,
+    oddsMaxOdds,
+    oddsType,
+    featureAccess.canAccessOddsAnalysis,
+  );
+  const oddsDistribution: OddsDistribution | null =
+    oddsData?.distribution ?? null;
+  const teamRecurrences: TeamOddsRecurrence[] = oddsData?.teamRecurrences ?? [];
+
+  // Team search: refetches when league changes, resets matchup
+  const { data: teamSearchData } = useTeamSearch(
+    selectedLeague,
+    featureAccess.canAccessMatchupAnalyzer,
+  );
+  const availableTeams: TeamSuggestion[] = teamSearchData ?? [];
+
+  // Matchup: only runs when user presses Analyze, re-runs when filters change
+  const alreadyAnalyzed =
+    matchupEnabled &&
+    homeTeamInput !== "" &&
+    awayTeamInput !== "" &&
+    homeTeamInput !== awayTeamInput;
+
+  const {
+    data: matchupResult,
+    isLoading: matchupLoading,
+    error: matchupQueryError,
+  } = useMatchup(
+    selectedLeague,
+    homeTeamInput,
+    awayTeamInput,
+    matchupMinOdds,
+    matchupMaxOdds,
+    matchupOddsType,
+    matchupEnabled && featureAccess.canAccessMatchupAnalyzer,
+  );
+
+  const matchupError = matchupQueryError?.message ?? null;
+
+  // Handlers
+  const handleLeagueChange = (leagueId: string) => {
+    setSelectedLeague(leagueId);
+    // Reset matchup when league changes
+    setMatchupEnabled(false);
+    setHomeTeamInput("");
+    setAwayTeamInput("");
+  };
+
+  const analyzeMatchup = () => {
+    if (!homeTeamInput || !awayTeamInput || homeTeamInput === awayTeamInput)
+      return;
+    setMatchupEnabled(true);
+  };
+
+  // Derive the label for the "hit" condition in matchup display
   const matchupHitLabel = matchupOddsType === "under" ? "Under" : "Over";
   const matchupMissLabel = matchupOddsType === "under" ? "Over" : "Under";
   const matchupHitColor = "text-green-600";
   const matchupMissColor = "text-red-600";
+  const hitColor = (pct: number) =>
+    pct >= 50 ? "text-green-600" : "text-red-500";
 
-  const isInitialLoad = useRef(true);
+  const scoringChartData = matchupResult
+    ? [
+        {
+          name: matchupResult.homeTeam.team,
+          Scored: parseFloat(
+            matchupResult.homeTeam.avgHalftimePoints.toFixed(1),
+          ),
+          Conceded: parseFloat(
+            matchupResult.homeTeam.avgHalftimeConceded.toFixed(1),
+          ),
+        },
+        {
+          name: matchupResult.awayTeam.team,
+          Scored: parseFloat(
+            matchupResult.awayTeam.avgHalftimePoints.toFixed(1),
+          ),
+          Conceded: parseFloat(
+            matchupResult.awayTeam.avgHalftimeConceded.toFixed(1),
+          ),
+        },
+      ]
+    : [];
 
-  // Matchup analyzer state
-  const [homeTeamInput, setHomeTeamInput] = useState("");
-  const [awayTeamInput, setAwayTeamInput] = useState("");
-  const [availableTeams, setAvailableTeams] = useState<TeamSuggestion[]>([]);
-  const [matchupResult, setMatchupResult] = useState<MatchupResult | null>(
-    null,
-  );
-  const [matchupLoading, setMatchupLoading] = useState(false);
-  const [matchupError, setMatchupError] = useState<string | null>(null);
-  const { showSuccess, paymentReference, handleClose } = usePaymentSuccess();
+  const oddsChartData = matchupResult
+    ? [
+        {
+          name: matchupResult.homeTeam.team,
+          Hit: parseFloat(matchupResult.homeTeam.overOddsPercentage.toFixed(1)),
+          Miss: parseFloat(
+            (100 - matchupResult.homeTeam.overOddsPercentage).toFixed(1),
+          ),
+          hitCount: matchupResult.homeTeam.overOddsCount,
+          total: matchupResult.homeTeam.gamesPlayed,
+        },
+        {
+          name: matchupResult.awayTeam.team,
+          Hit: parseFloat(matchupResult.awayTeam.overOddsPercentage.toFixed(1)),
+          Miss: parseFloat(
+            (100 - matchupResult.awayTeam.overOddsPercentage).toFixed(1),
+          ),
+          hitCount: matchupResult.awayTeam.overOddsCount,
+          total: matchupResult.awayTeam.gamesPlayed,
+        },
+      ]
+    : [];
 
-  // Initial effect: Load leagues first, then set default
-  useEffect(() => {
-    const initializeLeagues = async () => {
-      try {
-        const response = await fetch("/api/analytics?includeOdds=false");
-        const result = await response.json();
-
-        if (result.success && result.leagues.length > 0) {
-          setLeagues(result.leagues);
-
-          const defaultLeague = result.leagues.find(
-            (l: League) => l.name === "Liga ACB",
-          );
-          const chosen = defaultLeague || result.leagues[0];
-
-          setSelectedLeague(chosen.id);
-          // Set threshold from the chosen league's DB value
-          if (chosen.threshold !== undefined) {
-            setThreshold(chosen.threshold);
-          }
-
-          setLeaguesLoaded(true);
-        }
-      } catch (error) {
-        console.error("Failed to load leagues:", error);
-        setLoading(false);
-      }
-    };
-
-    initializeLeagues();
-  }, []);
-
-  // Update threshold when league changes
-  useEffect(() => {
-    if (!selectedLeague || leagues.length === 0) return;
-    const league = leagues.find((l) => l.id === selectedLeague);
-    if (league && league.threshold !== undefined) {
-      setThreshold(league.threshold);
-    }
-  }, [selectedLeague, leagues]);
-
-  // Main data fetch effect
-  useEffect(() => {
-    if (leaguesLoaded && selectedLeague) {
-      fetchAnalytics();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLeague, appliedLastNGames, leaguesLoaded]);
-
-  // Odds analysis refetch when its own filters change
-  useEffect(() => {
-    if (
-      selectedLeague &&
-      !loading &&
-      leaguesLoaded &&
-      featureAccess.canAccessOddsAnalysis
-    ) {
-      fetchOddsAnalysis();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [oddsMinOdds, oddsMaxOdds, oddsType]);
-
-  // Fetch teams when league changes
-  useEffect(() => {
-    if (selectedLeague && featureAccess.canAccessMatchupAnalyzer) {
-      fetchTeamsForLeague();
-      setMatchupResult(null);
-      setHomeTeamInput("");
-      setAwayTeamInput("");
-      setMatchupError(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLeague]);
-
-  const fetchTeamsForLeague = async () => {
-    if (!selectedLeague || !featureAccess.canAccessMatchupAnalyzer) return;
-    try {
-      const response = await fetch(
-        `/api/matchup?action=search&leagueId=${selectedLeague}&query=`,
+  type HiddenSeries = Record<string, boolean>;
+  function orderedLegend(
+    order: string[],
+    hidden?: HiddenSeries,
+    toggle?: (k: string) => void,
+  ) {
+    return ({ payload }: any) => {
+      const sorted = order
+        .map((key) => payload?.find((p: any) => p.dataKey === key))
+        .filter(Boolean);
+      return (
+        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 pt-3">
+          {sorted.map((entry: any) => (
+            <li
+              key={entry.dataKey}
+              onClick={() => toggle?.(entry.dataKey)}
+              className={`flex items-center gap-1.5 text-sm select-none ${toggle ? "cursor-pointer" : ""}`}
+              style={{ opacity: hidden?.[entry.dataKey] ? 0.35 : 1 }}
+            >
+              <span
+                className="inline-block w-3 h-3 rounded-sm shrink-0"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-gray-700">{entry.value}</span>
+            </li>
+          ))}
+        </ul>
       );
-      const result = await response.json();
-      if (result.success) {
-        setAvailableTeams(result.teams);
-      }
-    } catch (error) {
-      console.error("Failed to fetch teams:", error);
-    }
-  };
+    };
+  }
 
-  const fetchAnalytics = async () => {
-    if (!selectedLeague) return;
-    setLoading(true);
-
-    if (isInitialLoad.current && featureAccess.canAccessOddsAnalysis) {
-      setOddsLoading(true);
-    }
-
-    try {
-      const params = new URLSearchParams({
-        leagueId: selectedLeague,
-      });
-
-      if (isInitialLoad.current && featureAccess.canAccessOddsAnalysis) {
-        params.append("includeOdds", "true");
-        params.append("minOdds", oddsMinOdds.toString());
-        params.append("maxOdds", oddsMaxOdds.toString());
-        params.append("oddsType", oddsType);
-      }
-
-      if (appliedLastNGames !== undefined) {
-        params.append("lastNGames", appliedLastNGames.toString());
-      }
-
-      const response = await fetch(`/api/analytics?${params}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setHomeStats(result.data.homeStats);
-        setAwayStats(result.data.awayStats);
-        // Use the threshold returned from server (sourced from league in DB)
-        if (result.data.threshold !== undefined) {
-          setThreshold(result.data.threshold);
-        }
-
-        if (result.data.oddsAnalysis && featureAccess.canAccessOddsAnalysis) {
-          setOddsDistribution(result.data.oddsAnalysis.distribution);
-          setTeamRecurrences(result.data.oddsAnalysis.teamRecurrences);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch analytics:", error);
-    } finally {
-      setLoading(false);
-      if (isInitialLoad.current) {
-        setOddsLoading(false);
-        isInitialLoad.current = false;
-      }
-    }
-  };
-
-  const fetchOddsAnalysis = async () => {
-    if (!selectedLeague || !featureAccess.canAccessOddsAnalysis) return;
-    setOddsLoading(true);
-    try {
-      const params = new URLSearchParams({
-        leagueId: selectedLeague,
-        minOdds: oddsMinOdds.toString(),
-        maxOdds: oddsMaxOdds.toString(),
-        oddsType: oddsType,
-      });
-      const response = await fetch(`/api/odds-analysis?${params}`);
-      const result = await response.json();
-      if (result.success) {
-        setOddsDistribution(result.data.distribution);
-        setTeamRecurrences(result.data.teamRecurrences);
-      }
-    } catch (error) {
-      console.error("Failed to fetch odds analysis:", error);
-    } finally {
-      setOddsLoading(false);
-    }
-  };
-
-  const analyzeMatchup = async () => {
-    if (!featureAccess.canAccessMatchupAnalyzer) {
-      setMatchupError("Upgrade to Pro to access the Matchup Analyzer");
-      return;
-    }
-    if (!homeTeamInput.trim() || !awayTeamInput.trim()) {
-      setMatchupError("Please enter both home and away team names");
-      return;
-    }
-    if (!selectedLeague) {
-      setMatchupError("Please select a league first");
-      return;
-    }
-
-    setMatchupLoading(true);
-    setMatchupError(null);
-
-    try {
-      const params = new URLSearchParams({
-        homeTeam: homeTeamInput.trim(),
-        awayTeam: awayTeamInput.trim(),
-        leagueId: selectedLeague,
-        minOdds: matchupMinOdds.toString(),
-        maxOdds: matchupMaxOdds.toString(),
-        oddsType: matchupOddsType,
-      });
-
-      const response = await fetch(`/api/matchup?${params}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setMatchupResult(result.data);
-        setMatchupError(null);
-      } else {
-        setMatchupError(result.error || "Failed to analyze matchup");
-        setMatchupResult(null);
-      }
-    } catch (error) {
-      console.error("Matchup analysis failed:", error);
-      setMatchupError("An error occurred. Please try again.");
-      setMatchupResult(null);
-    } finally {
-      setMatchupLoading(false);
-    }
-  };
-
-  // Re-run matchup analysis when its filters change (only if a result already exists)
-  useEffect(() => {
-    if (matchupResult && homeTeamInput && awayTeamInput) {
-      analyzeMatchup();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchupMinOdds, matchupMaxOdds, matchupOddsType]);
-
-  // TODO: EVENTUALLY MOVE TO COMPONENTS
-
-  const StatsTable = ({
-    stats,
-    title,
-    oddsType,
-  }: {
-    stats: TeamStats[];
-    title: string;
-    oddsType: "over" | "under";
-  }) => {
-    const dirLabel = oddsType === "over" ? "Over" : "Under";
-    const dirSymbol = oddsType === "over" ? ">" : "<";
-
+  // Custom tooltip for HT Scoring Profile (matchup analyzer)
+  const ScoringProfileTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    const scored = payload.find((p: any) => p.dataKey === "Scored");
+    const conceded = payload.find((p: any) => p.dataKey === "Conceded");
     return (
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-2 text-gray-800">{title}</h2>
-        <div className="overflow-x-auto border rounded-lg shadow-sm">
-          <table className="min-w-full bg-white text-sm text-gray-900 table-fixed">
-            <thead className="bg-gray-100 uppercase text-xs font-semibold text-gray-700">
-              <tr>
-                <th className="px-3 py-2 text-left border-b w-1/4">Team</th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title="Average points scored by this team per game"
-                >
-                  Avg Pts
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title="Average points conceded (allowed) by this team per game"
-                >
-                  Avg Con
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Number of games where this team scored ${dirSymbol} ${threshold} points`}
-                >
-                  {dirLabel} {threshold}
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Percentage of games where this team scored ${dirSymbol} ${threshold} points`}
-                >
-                  % {dirLabel}
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Number of games where the OPPONENT scored ${dirSymbol} ${threshold} points`}
-                >
-                  Con.{threshold}
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Percentage of games where the OPPONENT scored ${dirSymbol} ${threshold} points`}
-                >
-                  Con.%
-                </th>
-                <th
-                  className="px-3 py-2 text-center border-b cursor-help"
-                  title="Wins - Losses. Note! Stats doesn't include draws"
-                >
-                  W-L
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {stats.map((stat, idx) => (
-                <tr
-                  key={stat.team}
-                  className={`hover:bg-blue-50 transition-colors ${
-                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  }`}
-                >
-                  <td className="px-3 py-2 font-medium border-r truncate">
-                    {stat.team}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {stat.avgPoints.toFixed(1)}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {stat.avgConceded.toFixed(1)}
-                  </td>
-                  <td className="px-3 py-2 text-right text-gray-500">
-                    {oddsType === "over"
-                      ? stat.aboveThreshold
-                      : stat.gamesPlayed - stat.aboveThreshold}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {oddsType === "over"
-                      ? stat.aboveThresholdPct.toFixed(0)
-                      : (100 - stat.aboveThresholdPct).toFixed(0)}
-                    %
-                  </td>
-                  <td className="px-3 py-2 text-right text-gray-500">
-                    {oddsType === "over"
-                      ? stat.concededAboveThreshold
-                      : stat.gamesPlayed - stat.concededAboveThreshold}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {oddsType === "over"
-                      ? stat.concededAboveThresholdPct.toFixed(0)
-                      : (100 - stat.concededAboveThresholdPct).toFixed(0)}
-                    %
-                  </td>
-                  <td className="px-3 py-2 text-center text-xs">
-                    {stat.wins}-{stat.losses}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  // TODO: EVENTUALLY MOVE TO COMPONENTS
-  const OddsDistributionCard = () => {
-    if (!oddsDistribution) return null;
-
-    const getPercentage = (value: number, total: number) =>
-      total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
-
-    return (
-      <div className="mb-6 mt-10">
-        <h2 className="pt-3 font-bold mb-2 text-gray-800">
-          Halftime Total Points Distribution (Relative to Odds Line)
-        </h2>
-
-        {/* Warning ONLY if fallback went below 1.40 */}
-        {oddsDistribution.fallbackBelow140 && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start">
-              <svg
-                className="w-5 h-5 text-yellow-600 mt-0.5 mr-2 shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div className="text-sm text-yellow-800">
-                <strong>Note:</strong> Some games in this league didn't have
-                odds in your selected range or any standard ranges down to 1.40.
-                We used available odds below 1.40 for those games.
-              </div>
-            </div>
-          </div>
+      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-sm">
+        <p className="font-semibold mb-1">{label}</p>
+        {scored && (
+          <p className="text-blue-600">
+            Avg HT Scored: <strong>{scored.value}</strong>
+          </p>
         )}
-
-        <div className="bg-white border rounded-lg shadow-sm p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-green-700 mb-1">
-                Above Odds Line
-              </div>
-              <div className="text-2xl font-bold text-green-900">
-                {oddsDistribution.aboveLine}
-              </div>
-              <div className="text-sm text-green-600">
-                {getPercentage(
-                  oddsDistribution.aboveLine,
-                  oddsDistribution.analyzedGames,
-                )}
-                % of analyzed games
-              </div>
-            </div>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-red-700 mb-1">
-                Below Odds Line
-              </div>
-              <div className="text-2xl font-bold text-red-900">
-                {oddsDistribution.belowLine}
-              </div>
-              <div className="text-sm text-red-600">
-                {getPercentage(
-                  oddsDistribution.belowLine,
-                  oddsDistribution.analyzedGames,
-                )}
-                % of analyzed games
-              </div>
-            </div>
-
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-700 mb-1">
-                No Odds Available
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                {oddsDistribution.noOddsAvailable}
-              </div>
-              <div className="text-sm text-gray-600">
-                {getPercentage(
-                  oddsDistribution.noOddsAvailable,
-                  oddsDistribution.totalGames,
-                )}
-                % of total games
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200 text-sm text-gray-600">
-            <div className="flex justify-between mb-1">
-              <span>Total Games:</span>
-              <span className="font-semibold">
-                {oddsDistribution.totalGames}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Games with Qualifying Odds:</span>
-              <span className="font-semibold">
-                {oddsDistribution.analyzedGames}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // TODO: EVENTUALLY MOVE TO COMPONENTS
-  const TeamRecurrenceTable = () => {
-    if (teamRecurrences.length === 0) return null;
-
-    return (
-      <div className="mb-6">
-        <div className="overflow-x-auto border rounded-lg shadow-sm">
-          <table className="min-w-full bg-white text-sm text-gray-900">
-            <thead className="bg-gray-100 uppercase text-xs font-semibold text-gray-700">
-              <tr>
-                <th className="px-3 py-2 text-left border-b">Team</th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Number of home games where halftime total went ${oddsType} the odds line`}
-                >
-                  Home
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Percentage of home games that went ${oddsType}`}
-                >
-                  Home %
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Number of away games where halftime total went ${oddsType} the odds line`}
-                >
-                  Away
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title={`Percentage of away games that went ${oddsType}`}
-                >
-                  Away %
-                </th>
-                <th
-                  className="px-3 py-2 text-right border-b cursor-help"
-                  title="Total occurrences (home + away)"
-                >
-                  Total
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {teamRecurrences.map((team, idx) => (
-                <tr
-                  key={team.team}
-                  className={`hover:bg-blue-50 transition-colors ${
-                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  }`}
-                >
-                  <td className="px-3 py-2 font-medium border-r">
-                    {team.team}
-                  </td>
-                  <td className="px-3 py-2 text-right text-gray-500">
-                    {team.homeOccurrences}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {team.homePercentage.toFixed(1)}%
-                  </td>
-                  <td className="px-3 py-2 text-right text-gray-500">
-                    {team.awayOccurrences}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {team.awayPercentage.toFixed(1)}%
-                  </td>
-                  <td className="px-3 py-2 text-right font-semibold">
-                    {team.totalOccurrences}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {conceded && (
+          <p className="text-red-500">
+            Avg HT Conceded: <strong>{conceded.value}</strong>
+          </p>
+        )}
       </div>
     );
   };
@@ -599,12 +262,12 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Success Toast */}
-      <SuccessToast
+      {/* <SuccessToast
         show={showSuccess}
         message="🎉 Payment Successful!"
         description="Your account has been upgraded to Pro. You now have access to all premium features."
         onClose={handleClose}
-      />
+      /> */}
       {/* <TestUpgradeButton /> */}
       <div className="flex items-center justify-between mb-7 mt-15">
         <h1 className="text-3xl font-bold text-gray-900">Team Analytics</h1>
@@ -626,12 +289,12 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
               </label>
               <select
                 value={selectedLeague}
-                onChange={(e) => setSelectedLeague(e.target.value)}
+                onChange={(e) => handleLeagueChange(e.target.value)}
                 className="w-full px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm sm:text-base cursor-pointer"
-                disabled={!leaguesLoaded}
+                disabled={leaguesLoading}
               >
-                {!leaguesLoaded && <option value="">Loading leagues...</option>}
-                {leaguesLoaded &&
+                {leaguesLoading && <option value="">Loading leagues...</option>}
+                {!leaguesLoading &&
                   leagues.map((league) => (
                     <option key={league.id} value={league.id}>
                       {league.name}
@@ -640,8 +303,8 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
               </select>
             </div>
 
-            {/* League threshold badge — read only */}
-            {leaguesLoaded && (
+            {/* League threshold badge */}
+            {!leaguesLoading && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="font-medium">Halftime Threshold:</span>
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold">
@@ -656,23 +319,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                 <label className="text-xs sm:text-sm font-medium text-gray-700">
                   Last N Games:
                 </label>
-                <div className="relative group">
-                  <svg
-                    className="w-4 h-4 text-gray-400 cursor-help"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10">
-                    Limit analysis to each team's last N games
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                  </div>
-                </div>
+                <ColInfo text={`Limit analysis to each team's last N games`} />
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
@@ -769,7 +416,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                   Odds Analysis
                 </h1>
 
-                {/* Odds Analysis section — own filter controls */}
+                {/* Odds Analysis filter */}
                 <div className="bg-slate-50 p-4 rounded-lg shadow-sm border border-slate-200 w-full sm:w-fit mb-6">
                   <OddsFilterControls
                     minOdds={oddsMinOdds}
@@ -783,12 +430,12 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                   />
                 </div>
 
-                <OddsDistributionCard />
+                <OddsDistributionCard oddsDistribution={oddsDistribution} />
 
                 <OddsRecurrenceSection
                   data={teamRecurrences}
-                  TeamRecurrenceTable={TeamRecurrenceTable}
                   oddsType={oddsType}
+                  TeamRecurrenceTable={TeamRecurrenceTable}
                 />
               </>
             )}
@@ -818,7 +465,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                   <select
                     value={homeTeamInput}
                     onChange={(e) => setHomeTeamInput(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm sm:text-base cursor-pointer"
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm sm:text-base"
                     disabled={!selectedLeague || availableTeams.length === 0}
                   >
                     <option value="">-- Select Home Team --</option>
@@ -841,7 +488,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                   <select
                     value={awayTeamInput}
                     onChange={(e) => setAwayTeamInput(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm sm:text-base cursor-pointer"
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm sm:text-base"
                     disabled={!selectedLeague || availableTeams.length === 0}
                   >
                     <option value="">-- Select Away Team --</option>
@@ -869,31 +516,26 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
               )}
 
               {(() => {
-                const alreadyAnalyzed =
-                  (!!matchupResult &&
-                    matchupResult.homeTeam.team.toLowerCase() ===
-                      homeTeamInput.toLowerCase() &&
-                    matchupResult.awayTeam.team.toLowerCase() ===
-                      awayTeamInput.toLowerCase()) ||
-                  (homeTeamInput !== "" && homeTeamInput === awayTeamInput);
-
+                const sameTeam =
+                  homeTeamInput !== "" && homeTeamInput === awayTeamInput;
+                const isDisabled =
+                  matchupLoading ||
+                  !selectedLeague ||
+                  !homeTeamInput ||
+                  !awayTeamInput ||
+                  sameTeam ||
+                  alreadyAnalyzed;
 
                 return (
                   <button
                     onClick={analyzeMatchup}
-                    disabled={
-                      matchupLoading ||
-                      !selectedLeague ||
-                      !homeTeamInput ||
-                      !awayTeamInput ||
-                      alreadyAnalyzed
-                    }
+                    disabled={isDisabled}
                     className="mt-4 w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   >
                     {matchupLoading
                       ? "Analyzing..."
-                      : homeTeamInput !== "" && homeTeamInput === awayTeamInput
-                        ? "Same Team Selected"
+                      : sameTeam
+                        ? "Same team selected"
                         : alreadyAnalyzed
                           ? "Already Analyzed"
                           : "Analyze Matchup"}
@@ -903,9 +545,8 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
             </div>
 
             {/* Matchup Results */}
-            {matchupResult && (
+            {matchupResult && matchupEnabled && (
               <div className="space-y-6">
-                {/* Matchup-specific filters — only shown once results are loaded */}
                 <div className="bg-slate-50 p-4 rounded-lg shadow-sm border border-slate-200 w-full sm:w-fit">
                   <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">
                     Matchup Odds Filters
@@ -918,7 +559,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                       setMatchupMinOdds(min);
                       setMatchupMaxOdds(max);
                     }}
-                    onTypeChange={setMatchupOddsType}
+                    onTypeChange={(t) => {
+                      setMatchupOddsType(t);
+                    }}
                   />
                 </div>
 
@@ -960,7 +603,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                         <span className="text-gray-900">
                           {matchupHitLabel} Odds:
                         </span>
-                        <span className={`font-semibold ${matchupHitColor}`}>
+                        <span
+                          className={`font-semibold ${hitColor(matchupResult.homeTeam.overOddsPercentage)}`}
+                        >
                           {matchupResult.homeTeam.overOddsCount} (
                           {matchupResult.homeTeam.overOddsPercentage.toFixed(1)}
                           %)
@@ -1012,7 +657,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                         <span className="text-gray-900">
                           {matchupHitLabel} Odds:
                         </span>
-                        <span className={`font-semibold ${matchupHitColor}`}>
+                        <span
+                          className={`font-semibold ${hitColor(matchupResult.awayTeam.overOddsPercentage)}`}
+                        >
                           {matchupResult.awayTeam.overOddsCount} (
                           {matchupResult.awayTeam.overOddsPercentage.toFixed(1)}
                           %)
@@ -1029,9 +676,144 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                   </div>
                 </div>
 
+                {/* Matchup Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Chart 1 — HT Scoring vs Conceding stacked bar */}
+                  <div className="bg-white border rounded-lg shadow-sm p-4">
+                    <h3 className="font-bold text-gray-800 mb-1">
+                      HT Scoring Profile
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-4">
+                      Avg halftime scored vs conceded —{" "}
+                      {matchupResult.homeTeam.team} home ·{" "}
+                      {matchupResult.awayTeam.team} away
+                    </p>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart
+                        layout="vertical"
+                        data={scoringChartData}
+                        margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#e5e7eb"
+                          horizontal={false}
+                        />
+                        <XAxis
+                          type="number"
+                          tick={{ fontSize: 11 }}
+                          height={40}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          tick={{ fontSize: 10 }}
+                          width={60}
+                          tickFormatter={(v) =>
+                            v.length > 12 ? `${v.slice(0, 12)}…` : v
+                          }
+                        />
+                        <Tooltip content={<ScoringProfileTooltip />} />
+                        <Legend
+                          content={orderedLegend(["Scored", "Conceded"])}
+                        />
+                        <Bar
+                          dataKey="Scored"
+                          stackId="a"
+                          fill="#3b82f6"
+                          radius={[0, 0, 0, 0]}
+                          name="Scored"
+                        />
+                        <Bar
+                          dataKey="Conceded"
+                          stackId="a"
+                          fill="#ef4444"
+                          radius={[0, 4, 4, 0]}
+                          name="Conceded"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Chart 2 — Odds hit/miss 100% stacked bar */}
+                  <div className="bg-white border rounded-lg shadow-sm p-4">
+                    <h3 className="font-bold text-gray-800 mb-1">
+                      Odds Hit Rate
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-4">
+                      {matchupHitLabel} hit % vs miss % —{" "}
+                      {matchupResult.homeTeam.team} home ·{" "}
+                      {matchupResult.awayTeam.team} away
+                    </p>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart
+                        layout="vertical"
+                        data={oddsChartData}
+                        margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis
+                          type="number"
+                          domain={[0, 100]}
+                          height={40}
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(v) => `${v}%`}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          tick={{ fontSize: 10 }}
+                          width={50}
+                          tickFormatter={(v) =>
+                            v.length > 12 ? `${v.slice(0, 12)}…` : v
+                          }
+                        />
+                        <Tooltip
+                          formatter={(
+                            value: number | undefined,
+                            name: string | undefined,
+                            props: any,
+                          ) => {
+                            if (name === "Hit") {
+                              const { hitCount, total } = props.payload;
+                              return [
+                                `${value}% (${hitCount}/${total} games)`,
+                                `${matchupHitLabel} Hit`,
+                              ];
+                            }
+                            return [`${value}%`, `${matchupMissLabel} Miss`];
+                          }}
+                          contentStyle={{ fontSize: 13, borderRadius: 8 }}
+                        />
+                        <Legend
+                          formatter={(value) =>
+                            value === "Hit"
+                              ? `${matchupHitLabel} Hit %`
+                              : `${matchupMissLabel} Miss %`
+                          }
+                        />
+                        <Bar
+                          dataKey="Hit"
+                          stackId="b"
+                          fill="#22c55e"
+                          radius={[0, 0, 0, 0]}
+                          name="Hit"
+                        />
+                        <Bar
+                          dataKey="Miss"
+                          stackId="b"
+                          fill="#575252"
+                          radius={[0, 4, 4, 0]}
+                          name="Miss"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
                 {/* Head-to-Head History */}
                 {matchupResult.headToHeadHistory.length > 0 && (
-                  <div className="mb-4 sm:mb-6 pt-3">
+                  <div className="mb-4 mt-10 sm:mb-6 pt-3">
                     <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
                       Head-to-Head History
                     </h3>
@@ -1060,7 +842,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                           {matchupResult.headToHeadHistory.map((game, idx) => (
                             <tr key={idx} className="hover:bg-gray-50">
                               <td className="px-4 py-2 text-xs">
-                                {new Date(game.date).toLocaleDateString()}
+                                {new Date(game.date).toLocaleDateString(
+                                  "en-GB",
+                                )}
                               </td>
                               <td className="px-4 py-2 text-xs">
                                 {game.homeTeam} vs {game.awayTeam}
@@ -1076,15 +860,11 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                               </td>
                               <td className="px-4 py-2 text-xs text-center">
                                 {game.wentOver ? (
-                                  <span
-                                    className={`${matchupHitColor} font-semibold`}
-                                  >
+                                  <span className="text-green-600 font-semibold">
                                     ✓ {matchupHitLabel}
                                   </span>
                                 ) : (
-                                  <span
-                                    className={`${matchupMissColor} font-semibold`}
-                                  >
+                                  <span className="text-red-600 font-semibold">
                                     ✗ {matchupMissLabel}
                                   </span>
                                 )}
@@ -1098,11 +878,11 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                 )}
 
                 {/* Game Logs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-15">
                   {/* Home Team Game Log */}
                   <div>
                     <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
-                      {matchupResult.homeTeam.team} - Recent Home Games
+                      {matchupResult.homeTeam.team} - Home Games
                     </h3>
                     <div className="space-y-2">
                       {matchupResult.homeTeam.gameLog
@@ -1117,7 +897,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                                 {matchupResult.homeTeam.team} vs {game.opponent}
                               </span>
                               <span className="text-xs text-gray-900">
-                                {new Date(game.date).toLocaleDateString()}
+                                {new Date(game.date).toLocaleDateString(
+                                  "en-GB",
+                                )}
                               </span>
                             </div>
                             <div className="flex justify-between items-center text-xs text-gray-900">
@@ -1147,8 +929,8 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
 
                   {/* Away Team Game Log */}
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
-                      {matchupResult.awayTeam.team} - Recent Away Games
+                    <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800 sm:mt-0 mt-5">
+                      {matchupResult.awayTeam.team} - Away Games
                     </h3>
                     <div className="space-y-2">
                       {matchupResult.awayTeam.gameLog
@@ -1163,7 +945,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                                 {game.opponent} vs {matchupResult.awayTeam.team}
                               </span>
                               <span className="text-xs text-gray-900">
-                                {new Date(game.date).toLocaleDateString()}
+                                {new Date(game.date).toLocaleDateString(
+                                  "en-GB",
+                                )}
                               </span>
                             </div>
                             <div className="flex justify-between items-center text-xs text-gray-900">

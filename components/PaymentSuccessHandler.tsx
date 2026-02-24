@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, X } from "lucide-react";
+import { usePaymentSuccess } from "@/hooks/usePaymentSuccess";
 
 interface SuccessToastProps {
   show: boolean;
@@ -12,7 +13,7 @@ interface SuccessToastProps {
   duration?: number;
 }
 
-export function SuccessToast({
+function SuccessToast({
   show,
   message,
   description,
@@ -56,5 +57,17 @@ export function SuccessToast({
         </div>
       </div>
     </div>
+  );
+}
+
+export function PaymentSuccessHandler() {
+  const { showSuccess, handleClose } = usePaymentSuccess();
+  return (
+    <SuccessToast
+      show={showSuccess}
+      message="🎉 Payment Successful!"
+      description="Your account has been upgraded to Pro. You now have access to all premium features."
+      onClose={handleClose}
+    />
   );
 }

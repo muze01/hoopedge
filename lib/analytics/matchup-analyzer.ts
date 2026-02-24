@@ -19,7 +19,6 @@ export async function analyzeMatchup(
     oddsType = "over",
   } = options;
 
-  // Find the teams
   const homeTeam = await prisma.team.findFirst({
     where: {
       name: { equals: homeTeamName, mode: "insensitive" },
@@ -40,7 +39,6 @@ export async function analyzeMatchup(
     );
   }
 
-  // Get home team's home games
   const homeTeamHomeGames = await prisma.game.findMany({
     where: {
       homeTeamId: homeTeam.id,
@@ -54,7 +52,6 @@ export async function analyzeMatchup(
     orderBy: { date: "desc" },
   });
 
-  // Get away team's away games
   const awayTeamAwayGames = await prisma.game.findMany({
     where: {
       awayTeamId: awayTeam.id,
@@ -68,7 +65,6 @@ export async function analyzeMatchup(
     orderBy: { date: "desc" },
   });
 
-  // Get head-to-head history
   const headToHeadGames = await prisma.game.findMany({
     where: {
       OR: [
@@ -106,7 +102,6 @@ export async function analyzeMatchup(
     oddsType,
   );
 
-  // Process head-to-head history
   const headToHeadHistory: HeadToHeadGame[] = headToHeadGames.map((game) => {
     const homeHalftime = game.homeFirst + game.homeSecond;
     const awayHalftime = game.awayFirst + game.awaySecond;
@@ -182,7 +177,7 @@ function processTeamStats(
       oddsLine !== null &&
       (oddsType === "over"
         ? halftimeTotal > oddsLine
-        : halftimeTotal < oddsLine); // "hit" — true when the bet condition was met
+        : halftimeTotal < oddsLine); // "hit": true when the bet condition was met
 
     if (hit) oddsHitCount++;
 

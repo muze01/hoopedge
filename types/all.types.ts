@@ -45,19 +45,6 @@ export interface UserRoleClientProps {
   userRole: UserRole;
 }
 
-export interface TeamStats {
-  team: string;
-  avgPoints: number;
-  avgConceded: number;
-  aboveThreshold: number;
-  aboveThresholdPct: number;
-  concededAboveThreshold: number;
-  concededAboveThresholdPct: number;
-  wins: number;
-  losses: number;
-  gamesPlayed: number;
-}
-
 export interface OddsDistribution {
   belowLine: number;
   equalToLine: number;
@@ -226,6 +213,7 @@ export interface TeamStats {
   wins: number;
   losses: number;
   gamesPlayed: number;
+  teamId?: string;
 }
 
 export interface AnalyticsResult {
@@ -241,3 +229,63 @@ export interface AnalyticsOptions {
   startDate?: Date;
   endDate?: Date;
 }
+
+export type GameEntry = {
+  date: string;
+  opponent: string;
+  opponentId: string;
+  location: "home" | "away";
+  teamHalftime: number;
+  oppHalftime: number;
+  halftimeTotal: number;
+  teamFinal: number;
+  oppFinal: number;
+  result: "win" | "loss" | "draw";
+  htResult: "win" | "loss" | "draw";
+  aboveThreshold: boolean;
+  oddsLine: number | null;
+  oddsHit: boolean;
+};
+
+export type AggStats = {
+  gamesPlayed: number;
+  avgHalftimeScored: number;
+  avgHalftimeConceded: number;
+  wins: number;
+  losses: number;
+  htWins: number;
+  htWinPct: number;
+  overThreshold: number;
+  overThresholdPct: number;
+  oddsGamesCount: number;
+  oddsHitCount: number;
+  oddsHitPct: number;
+} | null;
+
+export type TeamData = {
+  team: {
+    id: string;
+    name: string;
+    league: { id: string; name: string; threshold: number };
+  };
+  threshold: number;
+  oddsType: "over" | "under";
+  minOdds: number;
+  maxOdds: number;
+  homeStats: AggStats;
+  awayStats: AggStats;
+  overallStats: AggStats;
+  homeGameLog: GameEntry[];
+  awayGameLog: GameEntry[];
+  allGames: GameEntry[];
+  trendData: Array<{
+    game: number;
+    date: string;
+    scored: number;
+    conceded: number;
+    total: number;
+    oddsLine: number | null;
+    oddsHit: number;
+    threshold: number;
+  }>;
+};

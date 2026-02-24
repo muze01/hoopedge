@@ -18,7 +18,6 @@ export async function analyzeOddsPerformance(
     oddsType = "over",
   } = options;
 
-  // Build query filters
   const whereClause: any = {
     date: { lte: endDate },
   };
@@ -31,7 +30,6 @@ export async function analyzeOddsPerformance(
     whereClause.date.gte = startDate;
   }
 
-  // Fetch all games with their odds
   const games = await prisma.game.findMany({
     where: whereClause,
     include: {
@@ -87,7 +85,6 @@ export async function analyzeOddsPerformance(
     teamOccurrences.get(homeTeamName)!.homeGames++;
     teamOccurrences.get(awayTeamName)!.awayGames++;
 
-    // Find qualifying odds line with cascading fallback
     const { selectedLine, usedFallbackBelow140 } = findQualifyingOddsLine(
       game.odds,
       minOdds,
@@ -126,7 +123,6 @@ export async function analyzeOddsPerformance(
     }
   }
 
-  // Convert team occurrences to array with percentages
   const teamRecurrences: TeamOddsRecurrence[] = [];
 
   for (const [teamName, counts] of teamOccurrences.entries()) {
