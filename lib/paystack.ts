@@ -1,25 +1,47 @@
 import crypto from "crypto";
 
-if (!process.env.PAYSTACK_SECRET_KEY) {
+if (
+  process.env.NODE_ENV === "production" &&
+  !process.env.PAYSTACK_SECRET_KEY_PROD
+) {
+  throw new Error("PAYSTACK_SECRET_KEY is not set");
+}
+
+if (
+  process.env.NODE_ENV === "development" &&
+  !process.env.PAYSTACK_SECRET_KEY_LOCAL
+) {
   throw new Error("PAYSTACK_SECRET_KEY is not set");
 }
 
 export const PAYSTACK_CONFIG = {
-  secretKey: process.env.PAYSTACK_SECRET_KEY,
-  publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+  secretKey:
+    process.env.NODE_ENV === "production"
+      ? process.env.PAYSTACK_SECRET_KEY_PROD
+      : process.env.PAYSTACK_SECRET_KEY_LOCAL,
+  publicKey:
+    process.env.NODE_ENV === "production"
+      ? process.env.PAYSTACK_PUBLIC_KEY_PROD
+      : process.env.PAYSTACK_PUBLIC_KEY_LOCAL,
   baseUrl: "https://api.paystack.co",
 } as const;
 
 export const PAYSTACK_PLANS = {
   PRO_MONTHLY: {
-    planCode: process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE || "PLN_monthly",
-    amount: 15000, // ₦15,000
+    planCode:
+      process.env.NODE_ENV === "production"
+        ? process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE_PROD
+        : process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE_LOCAL,
+    amount: 10000, // ₦10,000
     currency: "NGN",
     interval: "monthly",
   },
   PRO_YEARLY: {
-    planCode: process.env.PAYSTACK_PRO_YEARLY_PLAN_CODE || "PLN_yearly",
-    amount: 150000, // ₦150,000 (save ₦30,000)
+    planCode:
+      process.env.NODE_ENV === "production"
+        ? process.env.PAYSTACK_PRO_YEARLY_PLAN_CODE_PROD
+        : process.env.PAYSTACK_PRO_YEARLY_PLAN_CODE_LOCAL,
+    amount: 100000, // ₦100,000 (saves ₦20,000 = 20% off)
     currency: "NGN",
     interval: "annually",
   },
@@ -68,6 +90,9 @@ export class PaystackAPI {
   }
 
   static verifyWebhook(body: string, signature: string): boolean {
+    if (!PAYSTACK_CONFIG.secretKey) {
+      throw new Error("PAYSTACK_SECRET_KEY is not configured");
+    }
     const hash = crypto
       .createHmac("sha512", PAYSTACK_CONFIG.secretKey)
       .update(body)

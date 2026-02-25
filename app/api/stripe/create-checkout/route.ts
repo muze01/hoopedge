@@ -33,8 +33,16 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/analytics?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?cancelled=true`,
+      success_url: `${
+        process.env.NODE_ENV === "production"
+          ? process.env.NEXT_PUBLIC_APP_URL
+          : process.env.NEXT_PUBLIC_APP_URL_LOCAL
+      }/analytics?success=true`,
+      cancel_url: `${
+        process.env.NODE_ENV === "production"
+          ? process.env.NEXT_PUBLIC_APP_URL
+          : process.env.NEXT_PUBLIC_APP_URL_LOCAL
+      }/pricing?cancelled=true`,
       customer_email: session.user.email,
       metadata: {
         userId: session.user.id,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PaystackAPI } from "@/lib/paystack";
 import { SubscriptionService } from "@/lib/subscription-service";
+import { prisma } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,6 +35,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const existing = await prisma.subscription.findFirst({
+      where: { providerSubId: reference },
+    });
+
+    // If this is the case then it has already been processed through webhook and user created, will allow re-verification but stop from creating another subscription
+    if (existing) {
+      return NextResponse.json({ success: true, message: "Already processed" });
+    }
+
     // Calculate end date based on plan
     const endDate = new Date();
     if (metadata.interval === "annually") {
@@ -50,7 +60,7 @@ export async function GET(req: NextRequest) {
       providerSubId: reference,
       providerCustomerId:
         data.customer?.customer_code || data.customer?.id?.toString(),
-      amount: data.amount / 100, // TODO: CONVERT ALL TO KOBO AND STORE IN SUBUNITS
+      amount: data.amount / 100, // TODO: CONVERT ALL TO KOBO AND STORE IN SUBUNITS in DB
       currency: "NGN",
       interval: metadata.interval === "annually" ? "yearly" : "monthly",
       endDate,

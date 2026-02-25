@@ -1,9 +1,11 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 const fromEmail = process.env.EMAIL_FROM!;
-const appName = "HoopEdge"; // Change this to your app name
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
+const appName = "HoopEdge";
+const appUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : process.env.NEXT_PUBLIC_APP_URL_LOCAL;
 
 // Set-up
 const createTransporter = (): Transporter => {

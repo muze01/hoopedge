@@ -23,7 +23,11 @@ export default async function AnalyticsPage({
   if (params.success === "true" && params.reference) {
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/paystack/verify?reference=${params.reference}`,
+        `${
+          process.env.NODE_ENV === "production"
+            ? process.env.NEXT_PUBLIC_APP_URL
+            : process.env.NEXT_PUBLIC_APP_URL_LOCAL
+        }/api/paystack/verify?reference=${params.reference}`,
         { cache: "no-store" },
       );
     } catch (error) {

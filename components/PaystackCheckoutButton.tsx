@@ -66,12 +66,12 @@ export function PaystackCheckoutButton({
         metadata: data.metadata,
         planCode: data.planCode, // If using subscription
         onSuccess: (transaction: any) => {
-          console.log("Payment successful:", transaction);
+          // console.log("Payment successful:", transaction);
           // Redirect to analytics with success flag
           window.location.href = `/analytics?success=true&reference=${transaction.reference}`;
         },
         onLoad: (response: any) => {
-          console.log("Transaction loaded:", response);
+          // console.log("Transaction loaded:", response);
           setLoading(false); // Stop loading when popup shows
         },
         onCancel: () => {
