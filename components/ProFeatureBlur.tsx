@@ -22,7 +22,7 @@ export const ProFeatureBlur: React.FC<ProFeatureBlurProps> = ({
   return (
     <div className={`relative ${className} `}>
       {/* Blurred content */}
-      <div className="blur-sm pointer-events-none select-none">{children}</div>
+      <div className="blur-lg pointer-events-none select-none">{children}</div>
 
       {/* Overlay */}
       <div className="absolute inset-0 bg-linear-to-b from-transparent via-white/60 to-white/90 flex items-center justify-center">

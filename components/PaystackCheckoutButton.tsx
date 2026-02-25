@@ -58,7 +58,7 @@ export function PaystackCheckoutButton({
 
       // Use newTransaction method (synchronous)
       popup.newTransaction({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+        key: data.publicKey,
         email: email,
         amount: data.amount, // Amount in kobo
         currency: "NGN",

@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
       providerSubId: reference,
       providerCustomerId:
         data.customer?.customer_code || data.customer?.id?.toString(),
-      amount: data.amount / 100, // TODO: CONVERT ALL TO KOBO AND STORE IN SUBUNITS in DB
+      amount: data.amount / 100,
       currency: "NGN",
       interval: metadata.interval === "annually" ? "yearly" : "monthly",
       endDate,

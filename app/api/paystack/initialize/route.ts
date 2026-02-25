@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { PAYSTACK_PLANS } from "@/lib/paystack";
+import { PAYSTACK_CONFIG, PAYSTACK_PLANS } from "@/lib/paystack";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      publicKey: PAYSTACK_CONFIG.publicKey,
       amount: planConfig.amount * 100, // convert to kobo
       reference,
       planCode: planConfig.planCode,
