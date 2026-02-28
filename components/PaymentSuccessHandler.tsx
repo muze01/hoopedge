@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, X } from "lucide-react";
-import { usePaymentSuccess } from "@/hooks/usePaymentSuccess";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
 interface SuccessToastProps {
   show: boolean;

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { SubscriptionService } from "@/lib/subscription-service";
+import { verifyAndCreateSubscription } from "@/lib/verify-payment";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -22,14 +23,7 @@ export default async function AnalyticsPage({
   const params = await searchParams;
   if (params.success === "true" && params.reference) {
     try {
-      await fetch(
-        `${
-          process.env.NODE_ENV === "production"
-            ? process.env.NEXT_PUBLIC_APP_URL
-            : process.env.NEXT_PUBLIC_APP_URL_LOCAL
-        }/api/paystack/verify?reference=${params.reference}`,
-        { cache: "no-store" },
-      );
+      await verifyAndCreateSubscription(params.reference);
     } catch (error) {
       console.error("Failed to verify payment:", error);
     }

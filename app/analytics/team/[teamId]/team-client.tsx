@@ -597,25 +597,41 @@ export default function TeamClient({
                     data={[
                       {
                         metric: "Avg HT Scored",
-                        Home: data.homeStats?.avgHalftimeScored.toFixed(1) ?? 0,
-                        Away: data.awayStats?.avgHalftimeScored.toFixed(1) ?? 0,
+                        Home: isPro
+                          ? (data.homeStats?.avgHalftimeScored.toFixed(1) ?? 0)
+                          : 0,
+                        Away: isPro
+                          ? (data.awayStats?.avgHalftimeScored.toFixed(1) ?? 0)
+                          : 0,
                       },
                       {
                         metric: "Avg HT Conceded",
-                        Home:
-                          data.homeStats?.avgHalftimeConceded.toFixed(1) ?? 0,
-                        Away:
-                          data.awayStats?.avgHalftimeConceded.toFixed(1) ?? 0,
+                        Home: isPro
+                          ? (data.homeStats?.avgHalftimeConceded.toFixed(1) ??
+                            0)
+                          : 0,
+                        Away: isPro
+                          ? (data.awayStats?.avgHalftimeConceded.toFixed(1) ??
+                            0)
+                          : 0,
                       },
                       {
-                        metric: `Over ${threshold} in %`,
-                        Home: data.homeStats?.overThresholdPct.toFixed(1) ?? 0,
-                        Away: data.awayStats?.overThresholdPct.toFixed(1) ?? 0,
+                        metric: `Over ${threshold}%`,
+                        Home: isPro
+                          ? (data.homeStats?.overThresholdPct.toFixed(1) ?? 0)
+                          : 0,
+                        Away: isPro
+                          ? (data.awayStats?.overThresholdPct.toFixed(1) ?? 0)
+                          : 0,
                       },
                       {
                         metric: `${hitLabel} Odds%`,
-                        Home: data.homeStats?.oddsHitPct.toFixed(1) ?? 0,
-                        Away: data.awayStats?.oddsHitPct.toFixed(1) ?? 0,
+                        Home: isPro
+                          ? (data.homeStats?.oddsHitPct.toFixed(1) ?? 0)
+                          : 0,
+                        Away: isPro
+                          ? (data.awayStats?.oddsHitPct.toFixed(1) ?? 0)
+                          : 0,
                       },
                     ]}
                     margin={{ top: 5, right: 20, left: 0, bottom: 5 }}

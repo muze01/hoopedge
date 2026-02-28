@@ -8,6 +8,7 @@ interface CreateSubscriptionParams {
   plan: SubscriptionPlan;
   provider?: "STRIPE" | "PAYSTACK" | "FLUTTERWAVE" | "MANUAL";
   providerSubId?: string;
+  paystackToken?: string;
   providerCustomerId?: string;
   amount?: number;
   currency?: string;

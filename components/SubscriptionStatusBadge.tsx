@@ -78,12 +78,12 @@ export function SubscriptionStatusBadge({
         </div>
       </div>
 
-      {/* Manage Button (only for STRIPE/PAYSTACK) */}
+      {/* Manage Button */}
       {(subscription.provider === "STRIPE" ||
         subscription.provider === "PAYSTACK") && (
         <ManageSubscriptionButton
           provider={subscription.provider}
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline"
+          className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline cursor-pointer"
         />
       )}
     </div>

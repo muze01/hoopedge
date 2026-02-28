@@ -53,11 +53,57 @@ export async function POST(req: NextRequest) {
           endDate,
         });
 
+        // Check if there's a pending paystack token for user then update their sub info with it if not then subsciption.create hasn't fired. TO BE IMPL IN V2
+        // const pending = await prisma.pendingPaystackToken.findUnique({
+        //   where: { customerCode: customer?.customer_code },
+        // });
+
+        // if (pending) {
+        //   await prisma.subscription.updateMany({
+        //     where: {
+        //       providerCustomerId: customer?.customer_code,
+        //       status: "ACTIVE",
+        //     },
+        //     data: {
+        //       providerSubId: pending.subscriptionCode,
+        //       paystackToken: pending.emailToken,
+        //     },
+        //   });
+        //   await prisma.pendingPaystackToken.delete({
+        //     where: { customerCode: customer?.customer_code },
+        //   });
+        // }
+
         break;
       }
 
       /**
-       * Fires when a subscription is cancelled — either by the user or via the Paystack dashboard.
+       * Fires when a Paystack subscription is first created.
+       * We store the subscription_code and email_token needed for cancellation.
+       // TODO: BE SURE THIS DOESN'T FIRE BEFORE CHARGE SUCCESS, ELSE THERE MIGHT BE AN ISSUE. TO BE IMPL IN V2
+       */
+      // case "subscription.create": {
+      //   const { subscription_code, email_token, customer } = event.data;
+
+      //   console.log("at subscription create", event.data);
+
+      //   await prisma.subscription.updateMany({
+      //     where: {
+      //       providerCustomerId: customer?.customer_code,
+      //       status: "ACTIVE",
+      //     },
+      //     data: {
+      //       providerSubId: subscription_code,
+      //       paystackToken: email_token,
+      //     },
+      //   });
+
+      //   break;
+      // }
+
+      /**
+       * Fires when subscription is cancelled via Paystack dashboard or API.
+       * User keeps access until endDate.
        */
       case "subscription.disable": {
         const { subscription_code, customer } = event.data;
@@ -80,14 +126,14 @@ export async function POST(req: NextRequest) {
       }
 
       /**
-       * Fires when a subscription renewal charge fails (e.g. expired card).
-       * We don't cancel immediately — we let the endDate expire naturally,
-       * giving the user time to update their card.
+       * Fires when a subscription renewal charge fails (e.g. expired card/insufficient funds).
+       * We don't cancel immediately, we let the endDate expire naturally,
+       * giving the user time to update their card but send email.
        */
       case "invoice.payment_failed": {
         const { subscription } = event.data;
 
-        // Optional: send user an email here nudging them to update card
+        // TODO: send user an email here nudging them to update card. PAYSTACK kinda handles this though.
         // For now just log it
         console.warn(
           "Paystack renewal failed for subscription:",

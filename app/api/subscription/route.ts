@@ -96,11 +96,36 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    if (subscription.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: "Subscription already cancelled" },
+        { status: 400 },
+      );
+    }
+
+    // Cancel on Paystack's side so they stop charging the card. 
+    // TODO: IMPL IN V2
+    // if (
+    //   subscription.provider === "PAYSTACK" &&
+    //   subscription.providerSubId &&
+    //   subscription.paystackToken
+    // ) {
+    //   try {
+    //     await PaystackAPI.cancelSubscription(
+    //       subscription.providerSubId,
+    //       subscription.paystackToken,
+    //     );
+    //   } catch (paystackError) {
+    //     console.error("Paystack cancellation error:", paystackError);
+    //   }
+    // }
+
     await SubscriptionService.cancelSubscription(subscription.id);
 
     return NextResponse.json({
       success: true,
-      message: "Subscription cancelled successfully",
+      message:
+        "Subscription cancelled successfully. You retain access until the end of your billing period.",
     });
   } catch (error) {
     console.error("Subscription cancellation error:", error);

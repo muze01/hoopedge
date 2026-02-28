@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import PricingClient from "./pricingClient";
+import PricingClient from "./pricing-client";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -28,8 +28,6 @@ import {
 } from "@/types/all.types";
 import { ProFeatureBlur } from "@/components/ProFeatureBlur";
 import { TestUpgradeButton } from "@/components/TestUpgradeButton";
-import { usePaymentSuccess } from "@/hooks/usePaymentSuccess";
-// import { SuccessToast } from "@/components/PaymentSuccessHandler";
 import {
   useLeagues,
   useAnalytics,
@@ -43,21 +41,64 @@ import { OddsDistributionCard } from "@/components/OddsDistribution";
 import { TeamRecurrenceTable } from "@/components/TeamRecurrenceTable";
 import { ColInfo } from "@/components/ColInfo";
 
+// useSessionState
+// Drop-in useState replacement that reads/writes sessionStorage.
+// Survives in-tab navigation, clears when the tab is closed.
+// SSR-safe, falls back to defaultValue when window is unavailable.
+function useSessionState<T>(key: string, defaultValue: T) {
+  const [state, setState] = useState<T>(defaultValue);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(key);
+      if (stored !== null) {
+        setState(JSON.parse(stored) as T);
+      }
+    } catch {}
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setAndPersist = (value: T | ((prev: T) => T)) => {
+    setState((prev) => {
+      const next =
+        typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
+      try {
+        sessionStorage.setItem(key, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  return [state, setAndPersist, hydrated] as const;
+}
+
 export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
   const featureAccess = getFeatureAccess(userRole);
-  const { showSuccess, paymentReference, handleClose } = usePaymentSuccess();
 
-  // Filter state (drives query keys) 
-  const [selectedLeague, setSelectedLeague] = useState<string>("");
-  const [lastNGames, setLastNGames] = useState<string>("");
-  const [appliedLastNGames, setAppliedLastNGames] = useState<
+  // Persisted filter state, survives navigation within the same tab
+  const [selectedLeague, setSelectedLeague, leagueHydrated] =
+    useSessionState<string>("ac_league", "");
+  const [lastNGames, setLastNGames] = useSessionState<string>(
+    "ac_last_n_input",
+    "",
+  );
+  const [appliedLastNGames, setAppliedLastNGames] = useSessionState<
     number | undefined
-  >(undefined);
-
-  // Odds Analysis section
-  const [oddsMinOdds, setOddsMinOdds] = useState(1.7);
-  const [oddsMaxOdds, setOddsMaxOdds] = useState(1.79);
-  const [oddsType, setOddsType] = useState<"over" | "under">("over");
+  >("ac_last_n_applied", undefined);
+  const [oddsMinOdds, setOddsMinOdds] = useSessionState<number>(
+    "ac_odds_min",
+    1.7,
+  );
+  const [oddsMaxOdds, setOddsMaxOdds] = useSessionState<number>(
+    "ac_odds_max",
+    1.79,
+  );
+  const [oddsType, setOddsType] = useSessionState<"over" | "under">(
+    "ac_odds_type",
+    "over",
+  );
 
   // Matchup section: team selection + triggered query
   const [homeTeamInput, setHomeTeamInput] = useState("");
@@ -74,12 +115,15 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
   const { data: leaguesData, isLoading: leaguesLoading } = useLeagues();
   const leagues: League[] = leaguesData?.leagues ?? [];
 
-  // Set default league once leagues load (Liga ACB preferred)
+  // Set default league once leagues load, only if no session preference exists.
+  // If the user already picked a particular league i.e Sweden this session, keep Sweden.
   const [leagueInitialized, setLeagueInitialized] = useState(false);
-  if (!leagueInitialized && leagues.length > 0) {
-    const defaultLeague =
-      leagues.find((l) => l.name === "Liga ACB") ?? leagues[0];
-    setSelectedLeague(defaultLeague.id);
+  if (!leagueInitialized && leagueHydrated && leagues.length > 0) {
+    if (!selectedLeague) {
+      const defaultLeague =
+        leagues.find((l) => l.name === "Liga ACB") ?? leagues[0];
+      setSelectedLeague(defaultLeague.id);
+    }
     setLeagueInitialized(true);
   }
 
@@ -369,7 +413,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
 
       {/* Team Performance Stats Section */}
       <section className="mt-10">
-        {loading ? (
+        {!leagueHydrated || loading ? (
           <div className="flex justify-center items-center h-48">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
@@ -406,7 +450,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
           className="mt-30"
         >
           <div className="pt-8 border-t-2 border-gray-200">
-            {oddsLoading ? (
+            {!leagueHydrated || oddsLoading ? (
               <div className="flex justify-center items-center h-48">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>

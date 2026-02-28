@@ -7,6 +7,7 @@ interface PaystackCheckoutButtonProps {
   email: string;
   className?: string;
   children?: React.ReactNode;
+  redirectTo?: string;
 }
 
 export function PaystackCheckoutButton({
@@ -14,6 +15,7 @@ export function PaystackCheckoutButton({
   email,
   className = "",
   children,
+  redirectTo = "/analytics",
 }: PaystackCheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -64,11 +66,11 @@ export function PaystackCheckoutButton({
         currency: "NGN",
         ref: data.reference,
         metadata: data.metadata,
-        planCode: data.planCode, // If using subscription
+        planCode: data.planCode,
         onSuccess: (transaction: any) => {
           // console.log("Payment successful:", transaction);
-          // Redirect to analytics with success flag
-          window.location.href = `/analytics?success=true&reference=${transaction.reference}`;
+          // Redirect to analytics OR billing with success flag
+          window.location.href = `${redirectTo}?success=true&reference=${transaction.reference}`;
         },
         onLoad: (response: any) => {
           // console.log("Transaction loaded:", response);

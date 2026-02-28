@@ -28,9 +28,7 @@ export function ManageSubscriptionButton({
           window.location.href = data.url;
         }
       } else if (provider === "PAYSTACK") {
-        // Paystack doesn't have a built-in customer portal
-        // You can build a custom one or redirect to your settings page ?????
-        window.location.href = "/settings/subscription";
+        window.location.href = "/billing";
       }
     } catch (error) {
       console.error("Error opening portal:", error);

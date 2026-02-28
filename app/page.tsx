@@ -48,12 +48,12 @@ export default function Home() {
                   20+
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">
-                  Teams Analyzed
+                  Leagues Analyzed
                 </div>
               </div>
               <div>
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  88%
+                  80%
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">
                   Avg. Hit Rate
@@ -61,7 +61,7 @@ export default function Home() {
               </div>
               <div>
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Live
+                  Freq.
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">
                   Data Updates
