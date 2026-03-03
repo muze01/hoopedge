@@ -25,6 +25,21 @@ import {
   TeamOddsRecurrence,
 } from "@/types/all.types";
 
+type SortKey = "avgPoints" | "avgConceded" | "winLoss";
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "avgPoints", label: "Avg Pts" },
+  { key: "avgConceded", label: "Avg Con" },
+  { key: "winLoss", label: "W-L" },
+];
+
+function sortStats(data: TeamStats[], sortBy: SortKey): TeamStats[] {
+  return [...data].sort((a, b) => {
+    if (sortBy === "avgConceded") return b.avgConceded - a.avgConceded;
+    if (sortBy === "winLoss") return b.wins - b.losses - (a.wins - a.losses);
+    return b.avgPoints - a.avgPoints;
+  });
+}
+
 const CHART_HEIGHT = 400;
 
 function useChartWidth() {
@@ -82,7 +97,7 @@ function useToggleBars() {
   );
   return { hidden, toggle };
 }
-  
+
 type HiddenBars = Record<string, boolean>;
 
 function orderedLegend(
@@ -171,26 +186,49 @@ export const TeamPerformanceSection: React.FC<
       title: string;
       oddsType: "over" | "under";
       threshold: number;
+      sortBy?: SortKey;
     }>;
   }
 > = ({ data, title, threshold, oddsType, StatsTable }) => {
-  const sortedData = [...data].sort((a, b) => b.avgPoints - a.avgPoints);
+  const [sortBy, setSortBy] = useState<SortKey>("avgPoints");
+  const sortedData = sortStats(data, sortBy);
   const { hidden, toggle } = useToggleBars();
 
   return (
     <Tabs defaultValue="table" className="w-full">
-      <div className="flex items-center justify-between mb-4 mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-y-3 mb-4 mt-10">
         <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-        <TabsList>
-          <TabsTrigger value="table" className="gap-2 cursor-pointer">
-            <Grid3x3 className="w-4 h-4" />
-            Table
-          </TabsTrigger>
-          <TabsTrigger value="chart" className="gap-2 cursor-pointer">
-            <BarChart3 className="w-4 h-4" />
-            Chart
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Sort pill */}
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <span className="text-xs text-gray-500 px-1 select-none">
+              Sort:
+            </span>
+            {SORT_OPTIONS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setSortBy(key)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  sortBy === key
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <TabsList>
+            <TabsTrigger value="table" className="gap-2 cursor-pointer">
+              <Grid3x3 className="w-4 h-4" />
+              Table
+            </TabsTrigger>
+            <TabsTrigger value="chart" className="gap-2 cursor-pointer">
+              <BarChart3 className="w-4 h-4" />
+              Chart
+            </TabsTrigger>
+          </TabsList>
+        </div>
       </div>
 
       <TabsContent value="chart" className="mt-0">
@@ -263,10 +301,11 @@ export const TeamPerformanceSection: React.FC<
 
       <TabsContent value="table" className="mt-0">
         <StatsTable
-          stats={data}
+          stats={sortedData}
           title=""
           oddsType={oddsType}
           threshold={threshold}
+          sortBy={sortBy}
         />
       </TabsContent>
     </Tabs>

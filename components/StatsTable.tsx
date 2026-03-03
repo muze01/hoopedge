@@ -2,19 +2,29 @@ import { TeamStats } from "@/types/all.types";
 import Link from "next/link";
 import { ColInfo } from "@/components/ColInfo";
 
+interface StatsTableProps {
+  stats: TeamStats[];
+  title: string;
+  oddsType: "over" | "under";
+  threshold: number;
+  sortBy?: "avgPoints" | "avgConceded" | "winLoss";
+}
+
 export const StatsTable = ({
   stats,
   title,
   oddsType,
   threshold,
-}: {
-  stats: TeamStats[];
-  title: string;
-  oddsType: "over" | "under";
-  threshold: number;
-}) => {
+  sortBy = "avgPoints",
+}: StatsTableProps) => {
   const dirLabel = oddsType === "over" ? "Over" : "Under";
   const dirSymbol = oddsType === "over" ? ">" : "<";
+
+    const sortedStats = [...stats].sort((a, b) => {
+      if (sortBy === "avgConceded") return b.avgConceded - a.avgConceded;
+      if (sortBy === "winLoss") return b.wins - b.losses - (a.wins - a.losses);
+      return b.avgPoints - a.avgPoints;
+    });
 
   return (
     <div className="mb-6">
@@ -24,11 +34,15 @@ export const StatsTable = ({
           <thead className="bg-gray-100 uppercase text-xs font-semibold text-gray-700">
             <tr>
               <th className="px-3 py-2 text-left border-b w-1/4">Team</th>
-              <th className="px-3 py-2 text-right border-b">
+              <th
+                className={`px-3 py-2 text-right border-b ${sortBy === "avgPoints" ? "text-blue-600" : ""}`}
+              >
                 Avg Pts
                 <ColInfo text="Average halftime points scored per game" />
               </th>
-              <th className="px-3 py-2 text-right border-b">
+              <th
+                className={`px-3 py-2 text-right border-b ${sortBy === "avgConceded" ? "text-blue-600" : ""}`}
+              >
                 Avg Con
                 <ColInfo text="Average halftime points conceded (allowed) per game" />
               </th>
@@ -56,14 +70,16 @@ export const StatsTable = ({
                   text={`% of games where the opponent scored ${dirSymbol} ${threshold} halftime points`}
                 />
               </th>
-              <th className="px-3 py-2 text-center border-b">
+              <th
+                className={`px-3 py-2 text-center border-b ${sortBy === "winLoss" ? "text-blue-600" : ""}`}
+              >
                 W-L
                 <ColInfo text="Halftime wins vs losses. Draws are excluded." />
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {stats.map((stat, idx) => (
+            {sortedStats.map((stat, idx) => (
               <tr
                 key={stat.team}
                 className={`hover:bg-blue-50 transition-colors ${

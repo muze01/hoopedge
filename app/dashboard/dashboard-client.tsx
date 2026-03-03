@@ -48,6 +48,7 @@ export default function DashboardClientPage({
               {/* User Info */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3">
+                  {/* eventually user should be able to upload profile picture */}
                   <img
                     className="h-10 w-10 rounded-full border border-gray-200"
                     src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"

@@ -24,7 +24,7 @@ export default function Home() {
             </h1>
 
             <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
-              Advanced analytics platform that identifies consistent first-half
+              Advanced analytics platform that helps you identify consistent first-half
               scoring patterns, odds inefficiencies, and profitable betting
               opportunities across major basketball leagues.
             </p>
@@ -133,7 +133,7 @@ export default function Home() {
       </section>
 
       {/* Value Props */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 md:pb-24">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="rounded-2xl shadow-sm hover:shadow-lg transition-shadow border-2">
             <CardContent className="p-6">
@@ -194,6 +194,26 @@ export default function Home() {
             <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border-2 border-gray-100">
               <div className="rounded-xl overflow-hidden mb-4 md:mb-6 border border-gray-200">
                 <Image
+                  src="/uploads/Screenshot (529).png"
+                  alt="Performance Trends"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto"
+                />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                Tabular / Visual Performance Trends
+              </h3>
+              <p className="text-sm md:text-base text-gray-600">
+                Interactive charts showing home and away scoring patterns,
+                helping you spot consistent over/under opportunities.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border-2 border-gray-100">
+              <div className="rounded-xl overflow-hidden mb-4 md:mb-6 border border-gray-200">
+                <Image
                   src="/uploads/Screenshot (533).png"
                   alt="Head-to-Head Analysis"
                   width={600}
@@ -209,27 +229,8 @@ export default function Home() {
                 data, recent form, and odds analysis for every matchup.
               </p>
             </div>
-
-            {/* Feature 2 */}
-            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border-2 border-gray-100">
-              <div className="rounded-xl overflow-hidden mb-4 md:mb-6 border border-gray-200">
-                <Image
-                  src="/uploads/Screenshot (529).png"
-                  alt="Performance Trends"
-                  width={600}
-                  height={400}
-                  className="w-full h-auto"
-                />
-              </div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                Visual Performance Trends
-              </h3>
-              <p className="text-sm md:text-base text-gray-600">
-                Interactive charts showing home and away scoring patterns,
-                helping you spot consistent over/under opportunities.
-              </p>
-            </div>
           </div>
+          
         </div>
       </section>
 

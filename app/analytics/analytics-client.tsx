@@ -20,11 +20,9 @@ import {
   OddsDistribution,
   TeamOddsRecurrence,
   TeamSuggestion,
-  MatchupResult,
   League,
   UserRoleClientProps,
   getFeatureAccess,
-  UserRole,
 } from "@/types/all.types";
 import { ProFeatureBlur } from "@/components/ProFeatureBlur";
 import { TestUpgradeButton } from "@/components/TestUpgradeButton";

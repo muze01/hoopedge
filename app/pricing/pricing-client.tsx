@@ -104,11 +104,12 @@ export default function PricingClient({
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-12 px-4">
         <div className="max-w-7xl mx-auto mt-10">
           <div className="text-center mb-16">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Choose Your Plan
             </h1>
             <p className="text-l text-gray-600 sm:text-lg max-w-xl mx-auto">
-              Unlock powerful basketball analytics insights
+              Unlock powerful basketball analytics insights & identify
+              consistent first-half scoring patterns
             </p>
           </div>
 
