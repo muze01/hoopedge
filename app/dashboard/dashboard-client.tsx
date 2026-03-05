@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { UserRole } from "@/types/all.types";
 import { SubscriptionStatusBadge } from "@/components/SubscriptionStatusBadge";
+import { formatDate } from "@/lib/format-date";
 
 type Session = typeof auth.$Infer.Session;
 type DashboardClientProps = {
@@ -115,7 +116,7 @@ export default function DashboardClientPage({
                         : "Access until:"}
                     </span>
                     <span className="ml-2 text-gray-900">
-                      {new Date(subscription.endDate).toLocaleDateString()}
+                      {formatDate(subscription.endDate.toISOString())}
                     </span>
                   </div>
                 )}

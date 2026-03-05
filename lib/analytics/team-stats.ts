@@ -4,6 +4,7 @@ import {
   AnalyticsResult,
   TeamStats,
 } from "@/types/all.types";
+import { formatDate } from "@/lib/format-date";
 
 export async function calculateTeamAnalytics(
   options: AnalyticsOptions = {},
@@ -329,7 +330,7 @@ export async function getTeamDetail(
     .reverse()
     .map((g, i) => ({
       game: i + 1,
-      date: new Date(g.date).toLocaleDateString(),
+      date: formatDate(g.date),
       scored: g.teamHalftime,
       conceded: g.oppHalftime,
       total: g.halftimeTotal,

@@ -38,6 +38,7 @@ import {
 import { ArrowLeft, Home, Plane } from "lucide-react";
 import { useTeamDetail } from "@/hooks/use-team-detail";
 import { ColInfo } from "@/components/ColInfo";
+import { formatDate } from "@/lib/format-date";
 
 // For scoring: threshold is the pivot. Higher = greener, lower = redder.
 function scoringColor(value: number, threshold: number): string {
@@ -132,9 +133,7 @@ const ScoringTrendTooltip = ({ active, payload }: any) => {
   const d = payload[0].payload;
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-sm">
-      <p className="font-semibold mb-1">
-        {new Date(d.date).toLocaleDateString("en-GB")}
-      </p>
+      <p className="font-semibold mb-1">{d.date}</p>
       <p className="text-blue-600">
         HT Scored: <strong>{d.scored}</strong>
       </p>
@@ -247,7 +246,7 @@ const GameLogTable = ({
               className={`hover:bg-blue-50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
             >
               <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">
-                {new Date(g.date).toLocaleDateString("en-GB")}
+                {formatDate(g.date)}
               </td>
               <td className="px-3 py-2 font-medium">
                 <Link
@@ -804,7 +803,7 @@ export default function TeamClient({
                         return (
                           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-sm">
                             <p className="font-semibold mb-1">
-                              {new Date(d.date).toLocaleDateString("en-GB")}
+                              {d.date}
                             </p>
                             <p className="text-purple-600">
                               HT Total: <strong>{d.total}</strong>

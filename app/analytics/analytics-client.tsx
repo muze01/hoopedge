@@ -38,6 +38,7 @@ import { StatsTable } from "@/components/StatsTable";
 import { OddsDistributionCard } from "@/components/OddsDistribution";
 import { TeamRecurrenceTable } from "@/components/TeamRecurrenceTable";
 import { ColInfo } from "@/components/ColInfo";
+import { formatDate } from "@/lib/format-date";
 
 // useSessionState
 // Drop-in useState replacement that reads/writes sessionStorage.
@@ -884,9 +885,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                           {matchupResult.headToHeadHistory.map((game, idx) => (
                             <tr key={idx} className="hover:bg-gray-50">
                               <td className="px-4 py-2 text-xs">
-                                {new Date(game.date).toLocaleDateString(
-                                  "en-GB",
-                                )}
+                                {formatDate(game.date)}
                               </td>
                               <td className="px-4 py-2 text-xs">
                                 {game.homeTeam} vs {game.awayTeam}
@@ -939,9 +938,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                                 {matchupResult.homeTeam.team} vs {game.opponent}
                               </span>
                               <span className="text-xs text-gray-900">
-                                {new Date(game.date).toLocaleDateString(
-                                  "en-GB",
-                                )}
+                                {formatDate(game.date)}
                               </span>
                             </div>
                             <div className="flex justify-between items-center text-xs text-gray-900">
@@ -987,9 +984,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                                 {game.opponent} vs {matchupResult.awayTeam.team}
                               </span>
                               <span className="text-xs text-gray-900">
-                                {new Date(game.date).toLocaleDateString(
-                                  "en-GB",
-                                )}
+                                {formatDate(game.date)}
                               </span>
                             </div>
                             <div className="flex justify-between items-center text-xs text-gray-900">
