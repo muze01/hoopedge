@@ -1,6 +1,7 @@
 "use client";
 
 import { auth } from "@/lib/auth";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -19,22 +20,17 @@ export default function Navigation({ session }: { session: Session | null }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3a15 15 0 010 18" />
-                <path d="M12 3a15 15 0 000 18" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-gray-900">HoopEdge</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/uploads/favicon_512.png"
+              alt="HoopEdge icon"
+              width={50}
+              height={80}
+              className="rounded-lg w-8 h-8 sm:w-12 sm:h-12"
+            />
+            <span className="text-l sm:text-xl font-bold text-gray-900">
+              HoopEdge
+            </span>
           </Link>
 
           {/* Desktop Nav */}

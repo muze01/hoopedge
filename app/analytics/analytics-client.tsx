@@ -339,7 +339,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                 {!leaguesLoading &&
                   leagues.map((league) => (
                     <option key={league.id} value={league.id}>
-                      {league.name}
+                      {league.name} ({league.country})
                     </option>
                   ))}
               </select>

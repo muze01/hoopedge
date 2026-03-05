@@ -8,32 +8,94 @@ interface LeagueConfig {
   oddsFile: string;
   season: string;
   country: string;
+  threshold?: number;
+  isPlayoff?: boolean;
 }
 
 // Configure multiple leagues to ingest
 // ../Python Files/basketball/spain/.....
 const leagueConfigs: LeagueConfig[] = [
   {
-    name: "Liga ACB",
-    gamesFile: "../Python Files/basketball/italy/games.csv",
-    oddsFile: "../Python Files/basketball/italy/odds.csv",
+    name: "First League",
+    gamesFile: "../Python Files/basketball/serbia/data2.csv",
+    oddsFile: "../Python Files/basketball/serbia/odds2.csv",
     season: "2025-2026",
-    country: "Italy",
+    country: "Serbia",
+    threshold: 40,
+    isPlayoff: false,
   },
   {
-    name: "NBA",
-    gamesFile: "../Python Files/basketball/nba/games.csv",
-    oddsFile: "../Python Files/basketball/nba/odds.csv",
+    name: "Extraliga",
+    gamesFile: "../Python Files/basketball/slovakia/data2.csv",
+    oddsFile: "../Python Files/basketball/slovakia/odds2.csv",
     season: "2025-2026",
-    country: "USA",
+    country: "Slovakia",
+    threshold: 40,
+    isPlayoff: false,
   },
   {
-    name: "EuroLeague",
-    gamesFile: "../Python Files/basketball/euroleague/games.csv",
-    oddsFile: "../Python Files/basketball/euroleague/odds.csv",
+    name: "ACB",
+    gamesFile: "../Python Files/basketball/spain/data2.csv",
+    oddsFile: "../Python Files/basketball/spain/odds2.csv",
     season: "2025-2026",
-    country: "Europe",
+    country: "Spain",
+    threshold: 40,
+    isPlayoff: false,
   },
+  {
+    name: "Primera FEB",
+    gamesFile: "../Python Files/basketball/sp_b/data2.csv",
+    oddsFile: "../Python Files/basketball/sp_b/odds2.csv",
+    season: "2025-2026",
+    country: "Spain",
+    threshold: 40,
+    isPlayoff: false,
+  },
+  {
+    name: "Basketligan",
+    gamesFile: "../Python Files/basketball/sweden/data2.csv",
+    oddsFile: "../Python Files/basketball/sweden/odds2.csv",
+    season: "2025-2026",
+    country: "Sweden",
+    threshold: 40,
+    isPlayoff: false,
+  },
+  {
+    name: "SB League",
+    gamesFile: "../Python Files/basketball/switzerland/data2.csv",
+    oddsFile: "../Python Files/basketball/switzerland/odds2.csv",
+    season: "2025-2026",
+    country: "Switzerland",
+    threshold: 40,
+    isPlayoff: false,
+  },
+  {
+    name: "Super Lig",
+    gamesFile: "../Python Files/basketball/turkey/data2.csv",
+    oddsFile: "../Python Files/basketball/turkey/odds2.csv",
+    season: "2025-2026",
+    country: "Turkey",
+    threshold: 40,
+    isPlayoff: false,
+  },
+  // {
+  //   name: "Basket Liga",
+  //   gamesFile: "../Python Files/basketball/poland/data2.csv",
+  //   oddsFile: "../Python Files/basketball/poland/odds2.csv",
+  //   season: "2025-2026",
+  //   country: "Poland",
+  //   threshold: 40,
+  //   isPlayoff: false,
+  // },
+  // {
+  //   name: "Divizia A",
+  //   gamesFile: "../Python Files/basketball/romania/data2.csv",
+  //   oddsFile: "../Python Files/basketball/romania/odds2.csv",
+  //   season: "2025-2026",
+  //   country: "Romania",
+  //   threshold: 40,
+  //   isPlayoff: false,
+  // },
 ];
 
 async function batchIngest() {
@@ -62,7 +124,9 @@ async function batchIngest() {
         config.oddsFile,
         config.name,
         config.season,
-        config.country
+        config.country,
+        config.threshold,
+        config.isPlayoff,
       );
 
       results.push({

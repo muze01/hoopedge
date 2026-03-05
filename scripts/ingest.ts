@@ -60,16 +60,22 @@ export async function ingestGamesAndOdds(
   oddsFilePath: string,
   leagueName: string,
   season?: string,
-  country?: string
+  country?: string,
+  threshold?: number,
+  isPlayoff?: boolean,
 ) {
   try {
     console.log(`Starting ingestion for league: ${leagueName}`);
 
     // 1. Create or get league
     const league = await prisma.league.upsert({
-      where: { name: leagueName },
-      update: { season, country },
-      create: { name: leagueName, season, country },
+      where: { name_country: { name: leagueName, country: country ?? "" } },
+      update: {
+        season,
+        // country,
+        ...(threshold !== undefined && { threshold }),
+      },
+      create: { name: leagueName, season, country, threshold: threshold ?? 40 },
     });
 
     console.log(`League ready: ${league.name} (ID: ${league.id})`);
@@ -141,7 +147,7 @@ export async function ingestGamesAndOdds(
 
       if (!homeTeamId || !awayTeamId) {
         console.error(
-          `⚠️  Skipping game: Team not found (${homeTeamName} vs ${awayTeamName})`
+          `⚠️  Skipping game: Team not found (${homeTeamName} vs ${awayTeamName})`,
         );
         continue;
       }
@@ -167,6 +173,7 @@ export async function ingestGamesAndOdds(
           awayThird: parseInt(gameRow.away_third),
           awayFourth: parseInt(gameRow.away_fourth),
           awayTotalPoints: parseInt(gameRow.away_total_points),
+          isPlayoff: isPlayoff ?? false,
         },
         create: {
           date: gameDate,
@@ -183,6 +190,7 @@ export async function ingestGamesAndOdds(
           awayFourth: parseInt(gameRow.away_fourth),
           awayTotalPoints: parseInt(gameRow.away_total_points),
           leagueId: league.id,
+          isPlayoff: isPlayoff ?? false,
         },
       });
 
@@ -251,11 +259,13 @@ export async function ingestGamesAndOdds(
 
 async function main() {
   await ingestGamesAndOdds(
-    "../Python Files/basketball/sweden/data2.csv", // gamesFilePath
-    "../Python Files/basketball/sweden/odds2.csv", // oddsFilePath
-    "Sweden", // leagueName
+    "../Python Files/basketball/czech/data2.csv", // gamesFilePath
+    "../Python Files/basketball/czech/odds2.csv", // oddsFilePath
+    "NBL", // leagueName
     "2025-2026", // season
-    "Sweden", // country
+    "Czech", // country
+    40, // threshold
+    false, // is the data for playoff games ?
   );
 }
 

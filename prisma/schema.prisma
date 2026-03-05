@@ -149,7 +149,7 @@ model team {
 
 model league {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
   country   String?
   season    String?
   threshold Int      @default(40)
@@ -157,6 +157,8 @@ model league {
   games     game[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([name, country])
 }
 
 model game {
@@ -166,6 +168,7 @@ model game {
   awayTeamId      String
   homeTeam        team       @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
   awayTeam        team       @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  isPlayoff       Boolean    @default(false)
   homeFirst       Int
   homeSecond      Int
   homeThird       Int
