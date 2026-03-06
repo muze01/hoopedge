@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { PaystackScript } from "@/components/PaystackScript";
 import QueryProvider from "@/components/QueryProvider";
 import { PaymentSuccessHandler } from "@/components/PaymentSuccessHandler";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default async function RootLayout({
           <PaystackScript />
           <Footer />
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );
