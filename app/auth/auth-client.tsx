@@ -37,7 +37,6 @@ export default function AuthClientPage() {
 
     try {
       await signInSocial(provider);
-      console.log("Logged in with", provider);
     } catch (err) {
       if (
         err instanceof Error &&
@@ -45,7 +44,7 @@ export default function AuthClientPage() {
         typeof err.digest === "string" &&
         err.digest.startsWith("NEXT_REDIRECT")
       ) {
-        // This is a redirect, not an actual error - just return
+        // This is a redirect, not an actual error, just return
         return;
       }
       setError(
