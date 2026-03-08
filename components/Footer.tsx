@@ -6,9 +6,9 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-white mt-20 mb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand */}
-          <div>
+          <div className="md:col-span-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               HoopEdge
             </h3>
@@ -66,7 +66,33 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal / Meta */}
+          {/* Support */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">
+              Support
+            </h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a
+                  href="https://x.com/Its__Muze"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.636 5.903-5.636Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  Message on X
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
           <div>
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Legal</h4>
             <ul className="space-y-2 text-sm">
@@ -82,10 +108,17 @@ export default function Footer() {
           <p className="text-xs text-gray-500">
             © {new Date().getFullYear()} HoopEdge. All rights reserved.
           </p>
-
-          <p className="text-xs text-gray-400">
-            Built for serious basketball analysis
-          </p>
+          <a
+            href="https://x.com/Its__Muze"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.636 5.903-5.636Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            Follow on X
+          </a>
         </div>
       </div>
     </footer>

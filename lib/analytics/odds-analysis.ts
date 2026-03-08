@@ -54,7 +54,13 @@ export async function analyzeOddsPerformance(
 
   const teamOccurrences = new Map<
     string,
-    { home: number; away: number; homeGames: number; awayGames: number }
+    {
+      teamId: string;
+      home: number;
+      away: number;
+      homeGames: number;
+      awayGames: number;
+    }
   >();
 
   for (const game of games) {
@@ -67,6 +73,7 @@ export async function analyzeOddsPerformance(
 
     if (!teamOccurrences.has(homeTeamName)) {
       teamOccurrences.set(homeTeamName, {
+        teamId: game.homeTeam.id,
         home: 0,
         away: 0,
         homeGames: 0,
@@ -75,6 +82,7 @@ export async function analyzeOddsPerformance(
     }
     if (!teamOccurrences.has(awayTeamName)) {
       teamOccurrences.set(awayTeamName, {
+        teamId: game.awayTeam.id,
         home: 0,
         away: 0,
         homeGames: 0,
@@ -133,6 +141,7 @@ export async function analyzeOddsPerformance(
 
     teamRecurrences.push({
       team: teamName,
+      teamId: counts.teamId,
       homeOccurrences: counts.home,
       homeGames: counts.homeGames,
       homePercentage,

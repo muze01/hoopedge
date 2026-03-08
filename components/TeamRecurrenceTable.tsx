@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TeamOddsRecurrence } from "@/types/all.types";
 import { ColInfo } from "@/components/ColInfo";
 
@@ -51,7 +52,18 @@ export const TeamRecurrenceTable = ({
                   idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                 }`}
               >
-                <td className="px-3 py-2 font-medium border-r">{team.team}</td>
+                <td className="px-3 py-2 font-medium border-r">
+                  {team.teamId ? (
+                    <Link
+                      href={`/analytics/team/${team.teamId}`}
+                      className="hover:text-blue-600 hover:underline transition-colors"
+                    >
+                      {team.team}
+                    </Link>
+                  ) : (
+                    team.team
+                  )}
+                </td>
                 <td className="px-3 py-2 text-right text-gray-500">
                   {team.homeOccurrences}
                 </td>

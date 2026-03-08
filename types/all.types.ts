@@ -99,6 +99,7 @@ export interface MatchupResult {
 
 export interface TeamOddsRecurrence {
   team: string;
+  teamId: string;
   homeOccurrences: number;
   homeGames: number;
   homePercentage: number;
