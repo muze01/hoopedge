@@ -8,6 +8,7 @@ interface CreateSubscriptionParams {
   plan: SubscriptionPlan;
   provider?: "STRIPE" | "PAYSTACK" | "FLUTTERWAVE" | "MANUAL";
   providerSubId?: string;
+  flwPlanSubscriptionId?: string;
   paystackToken?: string;
   providerCustomerId?: string;
   amount?: number;
@@ -26,6 +27,7 @@ export class SubscriptionService {
       plan,
       provider = "MANUAL",
       providerSubId,
+      flwPlanSubscriptionId,
       providerCustomerId,
       amount,
       currency,
@@ -48,6 +50,7 @@ export class SubscriptionService {
         status: "ACTIVE",
         provider,
         providerSubId,
+        flwPlanSubscriptionId,
         providerCustomerId,
         amount,
         currency,

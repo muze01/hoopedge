@@ -13,6 +13,8 @@ import {
   Zap,
 } from "lucide-react";
 import { PaystackCheckoutButton } from "@/components/PaystackCheckoutButton";
+import { FlutterwaveCheckoutButton } from "@/components/FlutterwaveCheckoutButton";
+import type { SupportedCurrency } from "@/lib/regions";
 
 interface Subscription {
   id: string;
@@ -30,6 +32,9 @@ interface BillingClientProps {
   subscription: Subscription | null;
   history: Subscription[];
   userEmail: string;
+  currency: SupportedCurrency;
+  yearlyPrice: string;
+  yearlySaving: string;
 }
 
 const STATUS_CONFIG = {
@@ -67,6 +72,7 @@ function formatDate(iso: string | null) {
 function formatAmount(amount: number | null, currency: string | null) {
   if (!amount) return "—";
   if (currency === "NGN") return `₦${amount.toLocaleString()}`;
+  if (currency === "GBP") return `£${amount.toLocaleString()}`;
   return `$${amount.toLocaleString()}`;
 }
 
@@ -74,6 +80,9 @@ export function BillingClient({
   subscription,
   history,
   userEmail,
+  currency,
+  yearlyPrice,
+  yearlySaving,
 }: BillingClientProps) {
   const router = useRouter();
   const [cancelling, setCancelling] = useState(false);
@@ -138,7 +147,6 @@ export function BillingClient({
           <div className="p-6">
             {subscription ? (
               <div className="space-y-4">
-                {/* Plan title + status badge */}
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-2xl font-bold text-gray-900">
@@ -158,7 +166,6 @@ export function BillingClient({
                   )}
                 </div>
 
-                {/* Plan details grid */}
                 <div className="grid grid-cols-2 gap-4 py-4 border-t border-gray-100">
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
@@ -200,7 +207,6 @@ export function BillingClient({
                   </div>
                 </div>
 
-                {/* Cancelled warning */}
                 {subscription.status === "CANCELLED" && (
                   <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                     <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
@@ -212,7 +218,6 @@ export function BillingClient({
                   </div>
                 )}
 
-                {/* Upgrade to yearly for active or cancelled monthly */}
                 {showUpgradeToYearly && (
                   <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-4 gap-4">
                     <div className="flex items-center gap-2 min-w-0">
@@ -222,22 +227,32 @@ export function BillingClient({
                           Switch to Yearly
                         </p>
                         <p className="text-xs text-blue-600">
-                          ₦100,000/yr · Save ₦20,000
+                          {yearlyPrice}/yr · Save {yearlySaving}
                         </p>
                       </div>
                     </div>
-                    <PaystackCheckoutButton
+                    
+                    {/* <PaystackCheckoutButton
                       plan="yearly"
                       email={userEmail}
                       redirectTo="/billing"
                       className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shrink-0"
                     >
                       Upgrade
-                    </PaystackCheckoutButton>
+                    </PaystackCheckoutButton> */}
+
+                    <FlutterwaveCheckoutButton
+                      plan="yearly"
+                      email={userEmail}
+                      currency={currency}
+                      redirectTo="/billing"
+                      className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shrink-0"
+                    >
+                      Upgrade
+                    </FlutterwaveCheckoutButton>
                   </div>
                 )}
 
-                {/* Already on best plan */}
                 {subscription.status === "ACTIVE" &&
                   subscription.interval === "yearly" && (
                     <p className="text-xs text-gray-400 text-center pt-1">
@@ -251,7 +266,6 @@ export function BillingClient({
                   </p>
                 )}
 
-                {/* Cancel, only for active subscriptions */}
                 {subscription.status === "ACTIVE" && (
                   <div className="pt-2">
                     {!showConfirm ? (
@@ -283,7 +297,6 @@ export function BillingClient({
                 )}
               </div>
             ) : (
-              /* No subscription. FREE user */
               <div className="text-center py-6 space-y-4">
                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
                   <CreditCard className="w-5 h-5 text-gray-400" />

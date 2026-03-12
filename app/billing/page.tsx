@@ -4,21 +4,32 @@ import { redirect } from "next/navigation";
 import { SubscriptionService } from "@/lib/subscription-service";
 import { BillingClient } from "./billing-client";
 import { verifyAndCreateSubscription } from "@/lib/verify-payment";
+import { getCurrencyForCountry, PRICING } from "@/lib/regions";
 
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; reference?: string }>;
+  // searchParams: Promise<{ success?: string; reference?: string }>;
+  searchParams: Promise<{ success?: string; transaction_id?: string }>;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) redirect("/auth");
 
   // Handle redirect back from Paystack after upgrade
+  // const params = await searchParams;
+  // if (params.success === "true" && params.reference) {
+  //   await verifyAndCreateSubscription(params.reference);
+  // }
+  // Handle redirect back from Flutterwave after payment
   const params = await searchParams;
-  if (params.success === "true" && params.reference) {
-    await verifyAndCreateSubscription(params.reference);
+  if (params.success === "true" && params.transaction_id) {
+    await verifyAndCreateSubscription(params.transaction_id);
   }
+
+  const country = (await headers()).get("x-user-country") ?? "US";
+  const currency = getCurrencyForCountry(country);
+  const pricing = PRICING[currency];
 
   const sub = await SubscriptionService.getActiveSubscription(session.user.id);
   const history = await SubscriptionService.getSubscriptionHistory(
@@ -27,6 +38,9 @@ export default async function BillingPage({
 
   return (
     <BillingClient
+      currency={currency}
+      yearlyPrice={`${pricing.symbol}${pricing.yearly.toLocaleString()}`}
+      yearlySaving={pricing.yearlySaving}
       subscription={
         sub
           ? {

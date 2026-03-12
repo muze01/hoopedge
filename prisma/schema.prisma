@@ -61,7 +61,8 @@ model subscription {
   provider          PaymentProvider?
   providerSubId     String?            @unique // Stripe subscription ID, Paystack sub code, etc.
   providerCustomerId String?           // Customer ID from payment provider
-  paystackToken     String?            // email_token from Paystack, required for cancellation
+  // paystackToken     String?            // email_token from Paystack, required for cancellation
+  flwPlanSubscriptionId String?          // Flutterwave plan subscription ID, required to cancel recurring billing
   
   // Dates
   startDate         DateTime           @default(now())

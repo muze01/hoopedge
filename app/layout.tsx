@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { PaystackScript } from "@/components/PaystackScript";
+import { FlutterwaveScript } from "@/components/FlutterwaveScript";
 import QueryProvider from "@/components/QueryProvider";
 import { PaymentSuccessHandler } from "@/components/PaymentSuccessHandler";
 import { Analytics } from "@vercel/analytics/next";
@@ -42,7 +43,8 @@ export default async function RootLayout({
           <Navigation session={session} />
           <PaymentSuccessHandler />
           {children}
-          <PaystackScript />
+          {/* <PaystackScript /> */}
+          <FlutterwaveScript />
           <Footer />
           <Analytics />
         </QueryProvider>

@@ -108,6 +108,10 @@ export default function Footer() {
           <p className="text-xs text-gray-500">
             © {new Date().getFullYear()} HoopEdge. All rights reserved.
           </p>
+
+          {/* <p className="text-xs text-gray-400">
+            Built for serious basketball analysis
+          </p> */}
           <a
             href="https://x.com/Its__Muze"
             target="_blank"

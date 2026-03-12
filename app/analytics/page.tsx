@@ -9,7 +9,7 @@ import { verifyAndCreateSubscription } from "@/lib/verify-payment";
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; reference?: string }>;
+  searchParams: Promise<{ success?: string; transaction_id?: string }>;
 }) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -21,9 +21,9 @@ export default async function AnalyticsPage({
 
   // If payment was successful, verify it
   const params = await searchParams;
-  if (params.success === "true" && params.reference) {
+  if (params.success === "true" && params.transaction_id) {
     try {
-      await verifyAndCreateSubscription(params.reference);
+      await verifyAndCreateSubscription(params.transaction_id);
     } catch (error) {
       console.error("Failed to verify payment:", error);
     }

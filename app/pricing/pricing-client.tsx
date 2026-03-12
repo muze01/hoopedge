@@ -2,27 +2,25 @@
 
 import { useState } from "react";
 import { Check, Zap } from "lucide-react";
-import { PaystackCheckoutButton } from "@/components/PaystackCheckoutButton";
-import { StripeCheckoutButton } from "@/components/StripeCheckoutButton";
+import { FlutterwaveCheckoutButton } from "@/components/FlutterwaveCheckoutButton";
+import { PRICING, type SupportedCurrency } from "@/lib/regions";
 
 interface PricingClientProps {
-  isNigerian: boolean;
+  currency: SupportedCurrency;
   userEmail: string | null;
 }
 
 export default function PricingClient({
-  isNigerian,
+  currency,
   userEmail,
 }: PricingClientProps) {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
-  const price = {
-    monthly: { ngn: "₦10,000", usd: "$6" },
-    yearly: { ngn: "₦100,000", usd: "$60" },
-  };
-
-  const displayPrice = isNigerian ? price[billing].ngn : price[billing].usd;
-  const zeroPrice = isNigerian ? "₦0" : "$0";
+  const pricing = PRICING[currency];
+  const displayPrice =
+    billing === "monthly"
+      ? `${pricing.symbol}${pricing.monthly.toLocaleString()}`
+      : `${pricing.symbol}${pricing.yearly.toLocaleString()}`;
   const perLabel = billing === "monthly" ? "/month" : "/year";
 
   return (
@@ -71,18 +69,14 @@ export default function PricingClient({
           animation: none;
         }
 
-        .yearly-btn:active {
-          transform: scale(0.98);
-        }
+        .yearly-btn:active { transform: scale(0.98); }
 
         .monthly-btn {
           transition: all 0.2s ease;
           border: 2px solid transparent !important;
         }
 
-        .monthly-btn:hover {
-          border-color: rgba(255,255,255,0.3) !important;
-        }
+        .monthly-btn:hover { border-color: rgba(255,255,255,0.3) !important; }
 
         .monthly-btn.active {
           background: rgba(255,255,255,0.15) !important;
@@ -122,7 +116,7 @@ export default function PricingClient({
                 </h2>
                 <div className="flex items-baseline">
                   <span className="text-4xl sm:text-5xl font-bold text-gray-900">
-                    {zeroPrice}
+                    {pricing.symbol}0
                   </span>
                   <span className="text-gray-600 ml-2 text-sm sm:text-base">
                     /month
@@ -199,7 +193,7 @@ export default function PricingClient({
 
                 {billing === "yearly" && (
                   <p className="text-yellow-300 text-xs mt-1 font-medium">
-                    🎉 You save {isNigerian ? "₦20,000" : "$12"} annually
+                    🎉 You save {pricing.yearlySaving} annually
                   </p>
                 )}
               </div>
@@ -245,21 +239,30 @@ export default function PricingClient({
                 </li>
               </ul>
 
-              {isNigerian && userEmail ? (
-                <PaystackCheckoutButton
+              {userEmail ? (
+                // <PaystackCheckoutButton
+                //   plan={billing}
+                //   email={userEmail}
+                //   className="w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer"
+                // >
+                //   Upgrade to Pro
+                // </PaystackCheckoutButton>
+
+                <FlutterwaveCheckoutButton
                   plan={billing}
                   email={userEmail}
+                  currency={currency}
                   className="w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer"
                 >
                   Upgrade to Pro
-                </PaystackCheckoutButton>
+                </FlutterwaveCheckoutButton>
               ) : (
-                <StripeCheckoutButton
-                  plan={billing}
-                  className="w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer"
+                <a
+                  href="/auth"
+                  className="block w-full px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg cursor-pointer text-center"
                 >
-                  Upgrade to Pro
-                </StripeCheckoutButton>
+                  Sign in to Upgrade
+                </a>
               )}
             </div>
           </div>
