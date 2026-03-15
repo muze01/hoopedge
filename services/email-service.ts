@@ -506,4 +506,20 @@ export const emailService = {
       // Don't throw - welcome email is not critical
     }
   },
+
+  sendRawEmail: async (to: string, subject: string, html: string) => {
+    try {
+      const { data, error } = await transporter.sendMail({
+        from: fromEmail,
+        to,
+        subject,
+        html,
+      });
+      if (error) throw new Error("Failed to send email");
+      return data;
+    } catch (error) {
+      console.error("Error in sendRawEmail:", error);
+      throw error;
+    }
+  },
 };

@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SubscriptionService } from "@/lib/subscription-service";
 
-/**
- * cron job to expire subscriptions
- * Set up in Vercel as a Cron Job or call from external cron service
- *
- * In vercel.json:
- * {
- *   "crons": [{
- *     "path": "/api/cron/expire-subscriptions",
- *     "schedule": "0 0 * * *"
- *   }]
- * }
- */
-
-// TODO: Haven't tested this
 export async function GET(req: NextRequest) {
   try {
-    // Verify cron secret (optional but recommended)
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

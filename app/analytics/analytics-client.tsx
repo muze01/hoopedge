@@ -39,6 +39,8 @@ import { OddsDistributionCard } from "@/components/OddsDistribution";
 import { TeamRecurrenceTable } from "@/components/TeamRecurrenceTable";
 import { ColInfo } from "@/components/ColInfo";
 import { formatDate } from "@/lib/format-date";
+import { BetSlip } from "@/components/BetSlip";
+import { useBetSlip } from "@/hooks/use-bet-slip";
 
 // useSessionState
 // Drop-in useState replacement that reads/writes sessionStorage.
@@ -75,6 +77,16 @@ function useSessionState<T>(key: string, defaultValue: T) {
 
 export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
   const featureAccess = getFeatureAccess(userRole);
+
+  // Bet slip - persists to localStorage, survives tab/league changes
+  const {
+    entries: slipEntries,
+    isFull: slipFull,
+    isInSlip,
+    toggleEntry,
+    removeEntry,
+    clearAll,
+  } = useBetSlip();
 
   // Persisted filter state, survives navigation within the same tab
   const [selectedLeague, setSelectedLeague, leagueHydrated] =
@@ -126,7 +138,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
     setLeagueInitialized(true);
   }
 
-  // Derived threshold from selected league
+  // Derived threshold and name from selected league
+  const selectedLeagueName =
+    leagues.find((l) => l.id === selectedLeague)?.name ?? "";
   const threshold =
     leagues.find((l) => l.id === selectedLeague)?.threshold ?? 40;
 
@@ -340,7 +354,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                 {!leaguesLoading &&
                   leagues.map((league) => (
                     <option key={league.id} value={league.id}>
-                        {league.country} ({league.name})
+                      {league.country} ({league.name})
                     </option>
                   ))}
               </select>
@@ -607,6 +621,103 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                     }}
                   />
                 </div>
+
+                {/* Add to Slip */}
+                {(() => {
+                  const inSlip = isInSlip(
+                    homeTeamInput,
+                    awayTeamInput,
+                    selectedLeague,
+                  );
+                  const full = !inSlip && slipFull;
+                  return (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() =>
+                          !full &&
+                          toggleEntry({
+                            homeTeam: homeTeamInput,
+                            awayTeam: awayTeamInput,
+                            leagueId: selectedLeague,
+                            leagueName: selectedLeagueName,
+                            minOdds: matchupMinOdds,
+                            maxOdds: matchupMaxOdds,
+                            oddsType: matchupOddsType,
+                          })
+                        }
+                        disabled={full}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
+                          full
+                            ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+                            : inSlip
+                              ? "bg-green-50 border-green-300 text-green-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 cursor-pointer"
+                              : "bg-white border-blue-300 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                        }`}
+                      >
+                        {full ? (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-4 h-4"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M8 12h8" />
+                            </svg>
+                            Slip Full
+                          </>
+                        ) : inSlip ? (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-4 h-4"
+                            >
+                              <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                            Added to Slip
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-4 h-4"
+                            >
+                              <path d="M5 12h14M12 5v14" />
+                            </svg>
+                            Add to Slip
+                          </>
+                        )}
+                      </button>
+                      {inSlip && !full && (
+                        <span className="text-xs text-gray-400">
+                          Hover to remove
+                        </span>
+                      )}
+                      {full && (
+                        <span className="text-xs text-gray-400">
+                          Remove a fixture to add more
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Stats Comparison Cards */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:mb-6">
@@ -1017,6 +1128,13 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
           </div>
         </ProFeatureBlur>
       </section>
+
+      {/* Bet Slip - fixed bottom-right */}
+      <BetSlip
+        entries={slipEntries}
+        onRemove={removeEntry}
+        onClearAll={clearAll}
+      />
     </div>
   );
 }
