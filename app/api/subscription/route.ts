@@ -75,12 +75,70 @@ export async function POST(req: NextRequest) {
 }
 
 // DELETE - Cancel subscription
+// export async function DELETE(req: NextRequest) {
+//   try {
+//     const session = await auth.api.getSession({
+//       headers: await headers(),
+//     });
+
+//     if (!session) {
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     }
+
+//     const subscription = await SubscriptionService.getActiveSubscription(
+//       session.user.id,
+//     );
+
+//     if (!subscription) {
+//       return NextResponse.json(
+//         { error: "No active subscription found" },
+//         { status: 404 },
+//       );
+//     }
+
+//     if (subscription.status === "CANCELLED") {
+//       return NextResponse.json(
+//         { error: "Subscription already cancelled" },
+//         { status: 400 },
+//       );
+//     }
+
+//     // Cancel on Paystack's side so they stop charging the card.
+//     // TODO: IMPL IN V2
+//     // if (
+//     //   subscription.provider === "PAYSTACK" &&
+//     //   subscription.providerSubId &&
+//     //   subscription.paystackToken
+//     // ) {
+//     //   try {
+//     //     await PaystackAPI.cancelSubscription(
+//     //       subscription.providerSubId,
+//     //       subscription.paystackToken,
+//     //     );
+//     //   } catch (paystackError) {
+//     //     console.error("Paystack cancellation error:", paystackError);
+//     //   }
+//     // }
+
+//     await SubscriptionService.cancelSubscription(subscription.id);
+
+//     return NextResponse.json({
+//       success: true,
+//       message:
+//         "Subscription cancelled successfully. You retain access until the end of your billing period.",
+//     });
+//   } catch (error) {
+//     console.error("Subscription cancellation error:", error);
+//     return NextResponse.json(
+//       { error: "Failed to cancel subscription" },
+//       { status: 500 },
+//     );
+//   }
+// }
+
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
+    const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -103,23 +161,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Cancel on Paystack's side so they stop charging the card. 
-    // TODO: IMPL IN V2
-    // if (
-    //   subscription.provider === "PAYSTACK" &&
-    //   subscription.providerSubId &&
-    //   subscription.paystackToken
-    // ) {
-    //   try {
-    //     await PaystackAPI.cancelSubscription(
-    //       subscription.providerSubId,
-    //       subscription.paystackToken,
-    //     );
-    //   } catch (paystackError) {
-    //     console.error("Paystack cancellation error:", paystackError);
-    //   }
-    // }
-
+    // No Flutterwave plan to cancel - renewals are manual so there are no automatic future charges to stop on Flutterwave's side.
     await SubscriptionService.cancelSubscription(subscription.id);
 
     return NextResponse.json({

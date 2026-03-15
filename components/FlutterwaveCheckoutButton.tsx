@@ -61,7 +61,7 @@ export function FlutterwaveCheckoutButton({
         tx_ref: data.txRef,
         amount: data.amount,
         currency: data.currency,
-        payment_plan: data.planId,
+        // payment_plan: data.planId,
         // payment_options: "card, banktransfer, ussd, mobilemoney",
         meta: data.meta,
         customer: {
