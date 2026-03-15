@@ -23,7 +23,7 @@ export default async function PricingPage() {
 
   // Set by middleware from x-vercel-ip-country. Falls back to "US" in dev.
   const country = (await headers()).get("x-user-country") ?? "US";
-  const currency = getCurrencyForCountry("NG");
+  const currency = getCurrencyForCountry(country);
 
   return (
     <PricingClient
