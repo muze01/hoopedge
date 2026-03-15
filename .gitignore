@@ -48,3 +48,6 @@ node_modules/.prisma
 prisma/dev.db
 lib/generated
 db_dump_clean.bak
+
+# /scripts
+# scripts/ingest.ts

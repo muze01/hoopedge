@@ -27,34 +27,22 @@ interface OddsRow {
   "Under Odd": string;
 }
 
-// Parse date from format "04 Oct 2025" to Date object
 function parseGameDate(dateStr: string): Date {
-  const cleaned = dateStr.trim();
-  return new Date(cleaned);
+  return new Date(dateStr.trim());
 }
 
-// Helper function to get or create a team
 async function getOrCreateTeam(
   teamName: string,
-  leagueId: string
+  leagueId: string,
 ): Promise<string> {
   const team = await prisma.team.upsert({
-    where: {
-      name_leagueId: {
-        name: teamName,
-        leagueId: leagueId,
-      },
-    },
+    where: { name_leagueId: { name: teamName, leagueId } },
     update: {},
-    create: {
-      name: teamName,
-      leagueId: leagueId,
-    },
+    create: { name: teamName, leagueId },
   });
   return team.id;
 }
 
-// Main ingestion function
 export async function ingestGamesAndOdds(
   gamesFilePath: string,
   oddsFilePath: string,
@@ -70,72 +58,77 @@ export async function ingestGamesAndOdds(
     // 1. Create or get league
     const league = await prisma.league.upsert({
       where: { name_country: { name: leagueName, country: country ?? "" } },
-      update: {
-        season,
-        // country,
-        ...(threshold !== undefined && { threshold }),
-      },
+      update: { season, ...(threshold !== undefined && { threshold }) },
       create: { name: leagueName, season, country, threshold: threshold ?? 40 },
     });
-
     console.log(`League ready: ${league.name} (ID: ${league.id})`);
 
-    // 2. Parse games CSV
+    // 2. Parse CSVs
     const gamesCSV = fs.readFileSync(gamesFilePath, "utf-8");
     const gamesParsed = Papa.parse<GameRow>(gamesCSV, {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: false,
     });
-
     console.log(`Parsed ${gamesParsed.data.length} games from CSV`);
 
-    // 3. Parse odds CSV
     const oddsCSV = fs.readFileSync(oddsFilePath, "utf-8");
     const oddsParsed = Papa.parse<OddsRow>(oddsCSV, {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: false,
     });
-
     console.log(`Parsed ${oddsParsed.data.length} odds lines from CSV`);
 
-    // 4. Group odds by game
+    // 3. Group odds by game key
     const oddsMap = new Map<string, OddsRow[]>();
-
     for (const oddsRow of oddsParsed.data) {
-      const key = `${oddsRow.date.trim()}|${oddsRow[
-        "Home Team"
-      ].trim()}|${oddsRow["Away Team"].trim()}`;
-      if (!oddsMap.has(key)) {
-        oddsMap.set(key, []);
-      }
+      const key = `${oddsRow.date.trim()}|${oddsRow["Home Team"].trim()}|${oddsRow["Away Team"].trim()}`;
+      if (!oddsMap.has(key)) oddsMap.set(key, []);
       oddsMap.get(key)!.push(oddsRow);
     }
 
-    // 5. Extract unique teams and create them
+    // 4. Create teams
     console.log("Creating teams...");
     const uniqueTeams = new Set<string>();
-    for (const gameRow of gamesParsed.data) {
-      uniqueTeams.add(gameRow.home_team.trim());
-      uniqueTeams.add(gameRow.away_team.trim());
+    for (const row of gamesParsed.data) {
+      uniqueTeams.add(row.home_team.trim());
+      uniqueTeams.add(row.away_team.trim());
     }
 
     const teamIdMap = new Map<string, string>();
-    let teamsCreated = 0;
-
     for (const teamName of uniqueTeams) {
-      const teamId = await getOrCreateTeam(teamName, league.id);
-      teamIdMap.set(teamName, teamId);
-      teamsCreated++;
+      teamIdMap.set(teamName, await getOrCreateTeam(teamName, league.id));
     }
+    console.log(`Teams processed: ${teamIdMap.size}`);
 
-    console.log(`Teams processed: ${teamsCreated}`);
+    // 5. Bulk fetch existing games for this league — one DB call, check in memory
+    const existingGames = await prisma.game.findMany({
+      where: { leagueId: league.id },
+      select: { id: true, date: true, homeTeamId: true, awayTeamId: true },
+    });
+    const existingGameKeys = new Set(
+      existingGames.map(
+        (g) => `${g.date.toISOString()}|${g.homeTeamId}|${g.awayTeamId}`,
+      ),
+    );
+    console.log(`Existing games in DB: ${existingGameKeys.size}`);
 
-    // 6. Process games and their odds
+    // 6. Bulk fetch existing odds for this league — one DB call, check in memory
+    const existingOdds = await prisma.oddsline.findMany({
+      where: { game: { leagueId: league.id } },
+      select: { gameId: true, line: true },
+    });
+    const existingOddsKeys = new Set(
+      existingOdds.map((o) => `${o.gameId}|${o.line}`),
+    );
+    console.log(`Existing odds lines in DB: ${existingOddsKeys.size}`);
+
+    // 7. Process games
     let gamesCreated = 0;
-    let gamesUpdated = 0;
+    let gamesSkipped = 0;
     let oddsCreated = 0;
+    let oddsSkipped = 0;
 
     for (const gameRow of gamesParsed.data) {
       const gameDate = parseGameDate(gameRow.date);
@@ -152,30 +145,15 @@ export async function ingestGamesAndOdds(
         continue;
       }
 
-      // Upsert game
-      const game = await prisma.game.upsert({
-        where: {
-          date_homeTeamId_awayTeamId_leagueId: {
-            date: gameDate,
-            homeTeamId,
-            awayTeamId,
-            leagueId: league.id,
-          },
-        },
-        update: {
-          homeFirst: parseInt(gameRow.home_first),
-          homeSecond: parseInt(gameRow.home_second),
-          homeThird: parseInt(gameRow.home_third),
-          homeFourth: parseInt(gameRow.home_fourth),
-          homeTotalPoints: parseInt(gameRow.home_total_points),
-          awayFirst: parseInt(gameRow.away_first),
-          awaySecond: parseInt(gameRow.away_second),
-          awayThird: parseInt(gameRow.away_third),
-          awayFourth: parseInt(gameRow.away_fourth),
-          awayTotalPoints: parseInt(gameRow.away_total_points),
-          isPlayoff: isPlayoff ?? false,
-        },
-        create: {
+      // In-memory check — no DB query
+      const gameKey = `${gameDate.toISOString()}|${homeTeamId}|${awayTeamId}`;
+      if (existingGameKeys.has(gameKey)) {
+        gamesSkipped++;
+        continue;
+      }
+
+      const game = await prisma.game.create({
+        data: {
           date: gameDate,
           homeTeamId,
           awayTeamId,
@@ -194,51 +172,54 @@ export async function ingestGamesAndOdds(
         },
       });
 
-      if (game.createdAt.getTime() === game.updatedAt.getTime()) {
-        gamesCreated++;
-      } else {
-        gamesUpdated++;
-      }
+      console.log(
+        `✅ Game created: ${homeTeamName} vs ${awayTeamName} (${gameRow.date})`,
+      );
+      gamesCreated++;
 
-      // Process odds for this game
+      // Add new game to the in-memory set so re-runs within same session are safe
+      existingGameKeys.add(gameKey);
+
+      // Process odds — in-memory check
       const oddsKey = `${gameRow.date.trim()}|${homeTeamName}|${awayTeamName}`;
-      const oddsForGame = oddsMap.get(oddsKey) || [];
+      const oddsForGame = oddsMap.get(oddsKey) ?? [];
 
       for (const oddsRow of oddsForGame) {
-        await prisma.oddsline.upsert({
-          where: {
-            gameId_line: {
-              gameId: game.id,
-              line: parseFloat(oddsRow["Line (Points)"]),
-            },
-          },
-          update: {
-            overOdd: parseFloat(oddsRow["Over Odd"]),
-            underOdd: parseFloat(oddsRow["Under Odd"]),
-          },
-          create: {
+        const line = parseFloat(oddsRow["Line (Points)"]);
+        const oddsLineKey = `${game.id}|${line}`;
+
+        if (existingOddsKeys.has(oddsLineKey)) {
+          oddsSkipped++;
+          continue;
+        }
+
+        await prisma.oddsline.create({
+          data: {
             gameId: game.id,
-            line: parseFloat(oddsRow["Line (Points)"]),
+            line,
             overOdd: parseFloat(oddsRow["Over Odd"]),
             underOdd: parseFloat(oddsRow["Under Odd"]),
           },
         });
+
+        existingOddsKeys.add(oddsLineKey);
         oddsCreated++;
       }
     }
 
-    console.log("\n✅ Ingestion completed successfully!");
-    console.log(`   Teams processed: ${teamsCreated}`);
-    console.log(`   Games created: ${gamesCreated}`);
-    console.log(`   Games updated: ${gamesUpdated}`);
-    console.log(`   Odds lines processed: ${oddsCreated}`);
+    console.log("\n✅ Ingestion completed!");
+    console.log(`   Teams processed: ${teamIdMap.size}`);
+    console.log(`   Games created:   ${gamesCreated}`);
+    console.log(`   Games skipped:   ${gamesSkipped}`);
+    console.log(`   Odds created:    ${oddsCreated}`);
+    console.log(`   Odds skipped:    ${oddsSkipped}`);
 
     return {
       success: true,
-      teamsCreated,
       gamesCreated,
-      gamesUpdated,
+      gamesSkipped,
       oddsCreated,
+      oddsSkipped,
     };
   } catch (error) {
     console.error("❌ Ingestion failed:", error);
@@ -248,28 +229,18 @@ export async function ingestGamesAndOdds(
   }
 }
 
-// Example usage function
-// "../Python Files/basketball/spain/data2.csv"
-// "../Python Files/basketball/spain/odds2.csv"
-// gamesFilePath: string,
-// oddsFilePath: string,
-// leagueName: string,
-// season?: string,
-// country?: string
-
 async function main() {
   await ingestGamesAndOdds(
-    "../Python Files/basketball/czech/data2.csv", // gamesFilePath
-    "../Python Files/basketball/czech/odds2.csv", // oddsFilePath
-    "NBL", // leagueName
-    "2025-2026", // season
-    "Czech", // country
-    40, // threshold
-    false, // is the data for playoff games ?
+    "../Python Files/basketball/nba/data2.csv",
+    "../Python Files/basketball/nba/odds2.csv",
+    "NBA",
+    "2025-2026",
+    "USA",
+    55,
+    false,
   );
 }
 
-// Run if called directly
 if (require.main === module) {
   main()
     .then(() => process.exit(0))
@@ -278,5 +249,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
-// export { prisma };

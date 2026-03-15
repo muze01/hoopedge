@@ -62,7 +62,7 @@ export function FlutterwaveCheckoutButton({
         amount: data.amount,
         currency: data.currency,
         payment_plan: data.planId,
-        payment_options: "card",
+        payment_options: "card, banktransfer, ussd, mobilemoney",
         meta: data.meta,
         customer: {
           email,
@@ -71,7 +71,8 @@ export function FlutterwaveCheckoutButton({
         customizations: {
           title: "HoopEdge Pro",
           description: `Pro ${plan} subscription`,
-          logo: "https://hoopedge.vercel.app/public/uploads/favicon_512.png",
+          // logo: "https://hoopedge.vercel.app/uploads/favicon_512.png",
+          logo: "https://raw.githubusercontent.com/muze01/hoopedge/main/public/uploads/favicon_512.png",
         },
         callback: (transaction: FlutterwaveResponse) => {
           if (transaction.status === "successful") {
