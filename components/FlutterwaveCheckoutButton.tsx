@@ -51,7 +51,7 @@ export function FlutterwaveCheckoutButton({
       });
 
       const data = await response.json();
-
+console.log(data)
       if (!data.success) {
         throw new Error(data.error || "Failed to initialize payment");
       }
@@ -63,10 +63,10 @@ export function FlutterwaveCheckoutButton({
         currency: data.currency,
         // payment_plan: data.planId,
         // payment_options: "card, banktransfer, ussd, mobilemoney",
-        meta: data.meta,
+        // meta: data.meta,
         customer: {
           email,
-          name: data.meta.userName ?? undefined,
+          name: data.customerName ?? undefined,
         },
         customizations: {
           title: "HoopEdge Pro",
