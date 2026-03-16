@@ -40,17 +40,17 @@ export default function Navigation({ session }: { session: Session | null }) {
             </NavLink>
 
             {session && (
-              <NavLink href="/analytics" active={isActive("/analytics")}>
-                Analytics
+              <NavLink href="/dashboard" active={isActive("/dashboard")}>
+                Dashboard
               </NavLink>
             )}
 
             {session ? (
               <Link
-                href="/dashboard"
-                className="ml-2 inline-flex items-center rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                href="/analytics"
+                className="inline-flex items-center rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
               >
-                Dashboard
+                Analytics
               </Link>
             ) : (
               <Link
