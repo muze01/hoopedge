@@ -565,7 +565,7 @@ export default function TeamClient({
           {/* Odds filter controls */}
           <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 w-full sm:w-fit mb-8">
             <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">
-              Odds Filters
+              Odds Filter
             </p>
             <OddsFilterControls
               minOdds={minOdds}

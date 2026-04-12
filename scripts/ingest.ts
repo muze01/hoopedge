@@ -229,16 +229,26 @@ export async function ingestGamesAndOdds(
   }
 }
 
+
 async function main() {
-  await ingestGamesAndOdds(
-    "../Python Files/basketball/nba/data2.csv",
-    "../Python Files/basketball/nba/odds2.csv",
-    "NBA",
-    "2025-2026",
-    "USA",
-    55,
-    false,
-  );
+  // await ingestGamesAndOdds(
+  //   "../Python Files/basketball/nba/data2.csv",
+  //   "../Python Files/basketball/nba/odds2.csv",
+  //   "NBA",
+  //   "2025-2026",
+  //   "USA",
+  //   55,
+  //   false,
+  // );
+    await ingestGamesAndOdds(
+      "../Python Files/basketball/bulgaria/data2.csv",
+      "../Python Files/basketball/bulgaria/odds2.csv",
+      "NBL",
+      "2025-2026",
+      "Bulgaria",
+      40,
+      false,
+    );
 }
 
 if (require.main === module) {

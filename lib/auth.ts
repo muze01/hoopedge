@@ -2,7 +2,6 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { emailService } from "@/services/email-service";
-import { createAuthMiddleware } from "better-auth/api";
 import { prisma } from "./db";
 
 export const auth = betterAuth({
@@ -89,35 +88,5 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
     },
   },
-  hooks: {
-    // TODO: this doesn't still work...SENDING MAIL TO USERS THAT SIGNUP USING SOCIALS
-    after: createAuthMiddleware(async (ctx) => {
-      // Handle social sign-up (Google/ etc)
-      if (ctx.path === "/sign-in/social") {
-        const newSession = ctx.context.newSession;
-        const isNewUser = ctx.context.isNewUser; // Better Auth provides this flag
-
-        if (newSession && isNewUser) {
-          const user = newSession.user;
-          console.log("🎉 New social user signed up:", user.email);
-
-          try {
-            await emailService.sendWelcomeEmail(
-              user.email,
-              user.name ?? user.email.split("@")[0],
-            );
-            console.log("✅ Welcome email sent to social user:", user.email);
-          } catch (error) {
-            console.error(
-              "❌ Failed to send welcome email to social user:",
-              error,
-            );
-            // Don't throw - let auth continue
-          }
-        }
-      }
-    }),
-  },
-
   plugins: [nextCookies()],
 });

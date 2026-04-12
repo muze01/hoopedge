@@ -475,6 +475,9 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
 
                 {/* Odds Analysis filter */}
                 <div className="bg-slate-50 p-4 rounded-lg shadow-sm border border-slate-200 w-full sm:w-fit mb-6">
+                  <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">
+                    Odds Filter
+                  </p>
                   <OddsFilterControls
                     minOdds={oddsMinOdds}
                     maxOdds={oddsMaxOdds}
@@ -606,7 +609,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
               <div className="space-y-6">
                 <div className="bg-slate-50 p-4 rounded-lg shadow-sm border border-slate-200 w-full sm:w-fit">
                   <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">
-                    Matchup Odds Filters
+                    Matchup Odds Filter
                   </p>
                   <OddsFilterControls
                     minOdds={matchupMinOdds}
@@ -707,7 +710,7 @@ export default function AnalyticsClient({ userRole }: UserRoleClientProps) {
                       </button>
                       {inSlip && !full && (
                         <span className="text-xs text-gray-400">
-                          Hover to remove
+                          Re-click to remove
                         </span>
                       )}
                       {full && (

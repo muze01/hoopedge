@@ -49,7 +49,8 @@ export async function analyzeOddsPerformance(
     noOddsAvailable: 0,
     totalGames: games.length,
     analyzedGames: 0,
-    fallbackBelow140: false,
+    // Number of games where we fell back to odds below 1.40
+    fallbackBelow140Count: 0,
   };
 
   const teamOccurrences = new Map<
@@ -101,7 +102,7 @@ export async function analyzeOddsPerformance(
     );
 
     if (usedFallbackBelow140) {
-      distribution.fallbackBelow140 = true;
+      distribution.fallbackBelow140Count++;
     }
 
     if (selectedLine === null) {
@@ -111,7 +112,6 @@ export async function analyzeOddsPerformance(
 
     distribution.analyzedGames++;
 
-    // For "over": hit = halftimeTotal > line. For "under": hit = halftimeTotal < line.
     const hitCondition =
       oddsType === "over"
         ? halftimeTotal > selectedLine
@@ -209,12 +209,11 @@ function findQualifyingOddsLine(
     }
   }
 
-  // Step 3: If still not found and user wanted 1.40+, try anything below 1.40
-  if (minOdds >= 1.4) {
-    for (const oddsLine of odds) {
-      if (oddsLine.line % 1 === 0.5 && oddsLine[oddField] < 1.4) {
-        return { selectedLine: oddsLine.line, usedFallbackBelow140: true };
-      }
+  // Step 3: Last resort - anything below 1.40 with a .5 line
+  // Only reached if ALL ranges down to 1.40 were exhausted
+  for (const oddsLine of odds) {
+    if (oddsLine.line % 1 === 0.5 && oddsLine[oddField] < 1.4) {
+      return { selectedLine: oddsLine.line, usedFallbackBelow140: true };
     }
   }
 

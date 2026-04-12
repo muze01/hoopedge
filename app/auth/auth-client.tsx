@@ -31,7 +31,7 @@ export default function AuthClientPage() {
   }, [message]);
 
   // Get callback URL from search params (set by middleware)
-  const handleSocialAuth = async (provider: "google" | "github") => {
+  const handleSocialAuth = async (provider: "google") => {
     setIsLoading(true);
     setError("");
 

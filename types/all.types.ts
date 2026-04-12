@@ -52,7 +52,7 @@ export interface OddsDistribution {
   noOddsAvailable: number;
   totalGames: number;
   analyzedGames: number;
-  fallbackBelow140: boolean;
+  fallbackBelow140Count: number;
 }
 
 export interface TeamMatchupStats {
@@ -136,16 +136,6 @@ export interface TeamPerformanceChartProps {
 export interface OddsRecurrenceChartProps {
   data: TeamOddsRecurrence[];
   title?: string;
-}
-
-export interface OddsDistribution {
-  belowLine: number;
-  equalToLine: number;
-  aboveLine: number;
-  noOddsAvailable: number;
-  totalGames: number;
-  analyzedGames: number;
-  fallbackBelow140: boolean; // Only true if had to use odds below 1.40
 }
 
 export interface TeamOddsRecurrence {

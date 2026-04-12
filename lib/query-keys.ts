@@ -8,7 +8,7 @@ export const queryKeys = {
   analytics: (leagueId: string, lastNGames?: number) =>
     ["analytics", leagueId, lastNGames] as const,
 
-  // Odds analysis — depends on league + odds filters
+  // Odds analysis — depends on league + odds filter
   oddsAnalysis: (
     leagueId: string,
     minOdds: number,
@@ -16,7 +16,7 @@ export const queryKeys = {
     oddsType: "over" | "under",
   ) => ["odds-analysis", leagueId, minOdds, maxOdds, oddsType] as const,
 
-  // Matchup — depends on both teams + league + odds filters
+  // Matchup — depends on both teams + league + odds filter
   matchup: (
     leagueId: string,
     homeTeam: string,

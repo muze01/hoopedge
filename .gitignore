@@ -42,6 +42,7 @@ next-env.d.ts
 
 test-email.ts
 note.js
+note2.js
 
 # Prisma
 node_modules/.prisma
